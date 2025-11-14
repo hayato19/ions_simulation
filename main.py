@@ -101,7 +101,35 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
         v[n+1, :] = v[n, :] + dt * a[:]
         x[n+1, :] = x[n, :] + dt * v[n+1, :]
 
-    return x, v, f
+    return x, v
+
+# --- 4次ルンゲクッタ法 ---
+def rk4_step_multi(m, k, x, v, dt, N):
+
+    def f(xn, vn):
+
+        dxdt = vn
+        # ---- 相互作用（全対全, 自己相互作用は除外）----
+        # dx[i, j] = x_j - x_i
+        dx = xn[np.newaxis, :] - xn[:, np.newaxis]   # (M, M)
+        np.fill_diagonal(dx, 0.0)                    # 自己項を0に
+        r3 = abs(dx ** 3)                            # 相対変位３乗
+        a_int = -(alpha/m) * np.sum(dx / (r3 + eps ** 3), axis=1)
+        dvdt = -(k/m) * xn + a_int
+        return dxdt, dvdt
+
+    for n in range(N):
+        xn, vn = x[n, :], v[n, :]
+
+        k1x, k1v = f(xn, vn)
+        k2x, k2v = f(xn + 0.5*dt*k1x, vn + 0.5*dt*k1v)
+        k3x, k3v = f(xn + 0.5*dt*k2x, vn + 0.5*dt*k2v)
+        k4x, k4v = f(xn + dt*k3x,     vn + dt*k3v)
+
+        x[n+1, :] = xn + (dt/6.0) * (k1x + 2*k2x + 2*k3x + k4x)
+        v[n+1, :] = vn + (dt/6.0) * (k1v + 2*k2v + 2*k3v + k4v)
+
+    return x, v
 
 # --- 実行 ---
 M = 5
@@ -112,10 +140,14 @@ posit = [1, 1, 1, 1, 1]
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM = initialize_arrays_multi(M, N, dt, x0s, v0s)
 
-xM, vM, f = euler_step_multi(
+# xM, vM, f = euler_step_multi(
+#     m_arr, k_arr, xM, vM, dt, N,
+#     alpha=alpha, eps=eps,
+#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+# )
+
+xM, vM = rk4_step_multi(
     m_arr, k_arr, xM, vM, dt, N,
-    alpha=alpha, eps=eps,
-    S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
 )
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
