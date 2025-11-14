@@ -89,14 +89,8 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
                 ai += -(alpha / m[i]) * dx / (r3 + eps**3)
 
             a[i] += ai
-
-            if gamma[i] != 0.0 and kl[i] != 0.0 and S0[i] != 0.0:
-                denom = (S0[i] + 1.0 + 4.0 / gamma[i]**2 * (delta[i] - kl[i] * v[n, i])**2)
-                f_val = hbar_f * gamma[i] * S0[i] / 2.0 / denom * kl[i]
-                f[n, i] = f_val
-                a[i] += f_val / m[i]
-            else:
-                f[n, i] = 0.0
+            f = cooling_step(n, v, i, S0, kl, gamma, delta, hbar_f)
+            a[i] += f / m[i]
 
         v[n+1, :] = v[n, :] + dt * a[:]
         x[n+1, :] = x[n, :] + dt * v[n+1, :]
@@ -106,6 +100,7 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
 # --- 4次ルンゲクッタ法 ---
 def rk4_step_multi(m, k, x, v, dt, N):
 
+    hbar_f = float(hbar)
     def f(xn, vn):
 
         dxdt = vn
@@ -130,6 +125,15 @@ def rk4_step_multi(m, k, x, v, dt, N):
         v[n+1, :] = vn + (dt/6.0) * (k1v + 2*k2v + 2*k3v + k4v)
 
     return x, v
+
+def cooling_step(n, v, i, S0, kl, gamma, delta, h):
+    if gamma[i] != 0.0 and kl[i] != 0.0 and S0[i] != 0.0:
+        denom = (S0[i] + 1.0 + 4.0 / gamma[i] ** 2 * (delta[i] - kl[i] * v[n, i]) ** 2)
+        f = h * gamma[i] * S0[i] / 2.0 / denom * kl[i]
+    else:
+        f = 0
+
+    return f
 
 # --- 実行 ---
 M = 5
