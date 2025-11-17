@@ -54,7 +54,7 @@ def set_particle_params(M, posit):
             k_arr[i]     = (two_pi * 1e6) ** 2 * m_arr[i]
             kl_arr[i]    = 2.0 * math.pi / 313e-6
             gamma_arr[i] = 20.0e6 * two_pi
-            S0_arr[i]    = 0
+            S0_arr[i]    = 0.9
             delta_arr[i] = base_delta
         else:
             m_arr[i]     = 1.0
@@ -71,7 +71,7 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
 
     M = x.shape[1]
     hbar_f = float(hbar)
-    f = np.zeros((N+1, M), dtype=float)# 時間発展の f(t,i) を保存する 2D 配列
+    f = np.zeros((N+1, M), dtype=float)# 時間発展の f(t,i)
 
     for n in range(N):
         a = -(k[:] / m[:]) * x[n, :].copy()
@@ -79,7 +79,6 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
         for i in range(M):
             ai = 0.0
             xi = x[n, i]
-            mi = m[i]
 
             for j in range(M):
                 if j == i:
@@ -89,13 +88,14 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
                 ai += -(alpha / m[i]) * dx / (r3 + eps**3)
 
             a[i] += ai
-            f = cooling_step(v[n,i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
-            a[i] += f / m[i]
+            f[n,i] = cooling_step(v[n,i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
+            a[i] += f[n,i] / m[i]
+            # f[n,i] = a[i]
 
         v[n+1, :] = v[n, :] + dt * a[:]
         x[n+1, :] = x[n, :] + dt * v[n+1, :]
 
-    return x, v
+    return x, v, f
 
 # --- 4次ルンゲクッタ法 ---
 def rk4_step_multi(m, k, x, v, dt, N, S0, kl, gamma, delta):
@@ -140,16 +140,16 @@ posit = [1, 1, 1, 1, 1]
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM = initialize_arrays_multi(M, N, dt, x0s, v0s)
 
-# xM, vM, f = euler_step_multi(
-#     m_arr, k_arr, xM, vM, dt, N,
-#     alpha=alpha, eps=eps,
-#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
-# )
-
-xM, vM = rk4_step_multi(
+xM, vM, f = euler_step_multi(
     m_arr, k_arr, xM, vM, dt, N,
+    alpha=alpha, eps=eps,
     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
 )
+
+# xM, vM = rk4_step_multi(
+#     m_arr, k_arr, xM, vM, dt, N,
+#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+# )
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
 
@@ -177,6 +177,17 @@ for j in range(M):
 plt.title('Multi-particle trajectory (expanded view)')
 plt.xlabel('Time t [s]')
 plt.ylabel('Position x(t)')
+plt.grid(True)
+plt.legend(ncol=2)
+plt.tight_layout()
+plt.show()
+
+plt.figure()  # figsizeは上で設定したので不要
+for j in range(M):
+    plt.plot(t, f[:, j], label=f'particle {j}')
+plt.title('Multi-particle trajectory (expanded view)')
+plt.xlabel('Time t [s]')
+plt.ylabel('f(t)')
 plt.grid(True)
 plt.legend(ncol=2)
 plt.tight_layout()
