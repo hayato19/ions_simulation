@@ -6,8 +6,8 @@ from decimal import Decimal, getcontext
 getcontext().prec = 50  # 計算精度（桁数）を設定
 
 # --- params ---
-dt = 1e-10
-N  = 100000
+dt = 1e-10 / 2
+N  = 200000
 alpha = 2.3e-28
 eps = 1e-7
 
@@ -43,26 +43,26 @@ def set_particle_params(M, posit):
     delta_arr = np.empty(M, dtype=float)
 
     two_pi = 2.0 * math.pi
-    base_delta = -40.0e6 * two_pi
 
     for i in range(M):
         if posit[i] == 1:
             M_mol = Decimal("9e-3")
             m_decimal = M_mol / NA
             m_arr[i]  = float(m_decimal)
-
             k_arr[i]     = (two_pi * 1e6) ** 2 * m_arr[i]
-            kl_arr[i]    = 2.0 * math.pi / 313e-6
+
+            kl_arr[i]    = two_pi / 313e-9
             gamma_arr[i] = 20.0e6 * two_pi
-            S0_arr[i]    = 0.9
-            delta_arr[i] = base_delta
+            S0_arr[i]    = 1
+            delta_arr[i] = -40.0e6 * two_pi
+
         else:
             m_arr[i]     = 1.0
             k_arr[i]     = 1.0
             kl_arr[i]    = 0.0
             gamma_arr[i] = 0.0
             S0_arr[i]    = 0.0
-            delta_arr[i] = base_delta
+            delta_arr[i] = -40.0e6 * two_pi
 
     return m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr
 
@@ -127,7 +127,7 @@ def rk4_step_multi(m, k, x, v, dt, N, S0, kl, gamma, delta):
     return x, v
 
 def cooling_step(v, S0, kl, gamma, delta, h):
-    denom = (S0 + 1.0 + 4.0 / gamma ** 2 * (delta - kl * v) ** 2)
+    denom = (S0 + 1.0 + 4.0 / (gamma ** 2) * (delta - kl * v) ** 2)
     f = h * gamma * S0 / 2.0 / denom * kl
     return f
 
@@ -154,44 +154,52 @@ print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
 
 import os
+from datetime import datetime
 import matplotlib.pyplot as plt
 
-SAVE_DIR = "./figs"                 # 保存先フォルダ
-SAVE_NAME = "x_vs_time.png"         # 任意のファイル名
+# --- 時間依存のファイル名を生成 ---
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+SAVE_DIR = "./figs"
+SAVE_NAME_X = f"x_vs_time_{timestamp}.png"   # x(t)
+SAVE_NAME_F = f"f_vs_time_{timestamp}.png"   # f(t)
 
 os.makedirs(SAVE_DIR, exist_ok=True)
-save_path = os.path.join(SAVE_DIR, SAVE_NAME)
+save_path_x = os.path.join(SAVE_DIR, SAVE_NAME_X)
+save_path_f = os.path.join(SAVE_DIR, SAVE_NAME_F)
 
-# 描画設定
 plt.rcParams['figure.figsize'] = [20, 6]
 plt.rcParams['figure.dpi'] = 200
 
-# 描画設定を調整して画質を向上
-plt.rcParams['figure.figsize'] = [20, 6]   # 横長の20インチ×6インチ
-plt.rcParams['figure.dpi'] = 200           # 高解像度
-
-# --- 可視化（各粒子の x(t) を重ね描き） ---
-plt.figure()  # figsizeは上で設定したので不要
+# --- x(t) プロット ---
+fig_x = plt.figure()
 for j in range(M):
     plt.plot(t, xM[:, j], label=f'particle {j}')
-plt.title('Multi-particle trajectory (expanded view)')
+plt.title('Multi-particle trajectory (x vs t)')
 plt.xlabel('Time t [s]')
 plt.ylabel('Position x(t)')
 plt.grid(True)
 plt.legend(ncol=2)
 plt.tight_layout()
+fig_x.savefig(save_path_x, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
 plt.show()
 
-plt.figure()  # figsizeは上で設定したので不要
+print(f"Saved x-t figure to: {save_path_x}")
+
+# --- f(t) プロット ---
+fig_f = plt.figure()
 for j in range(M):
     plt.plot(t, f[:, j], label=f'particle {j}')
-plt.title('Multi-particle trajectory (expanded view)')
+plt.title('Radiation force (f vs t)')
 plt.xlabel('Time t [s]')
 plt.ylabel('f(t)')
 plt.grid(True)
 plt.legend(ncol=2)
 plt.tight_layout()
+fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
 plt.show()
+
+print(f"Saved f-t figure to: {save_path_f}")
 
 # from ipywidgets import interact
 
