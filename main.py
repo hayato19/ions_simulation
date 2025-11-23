@@ -7,7 +7,7 @@ getcontext().prec = 50  # 計算精度（桁数）を設定
 
 # --- params ---
 dt = 1e-10 / 2
-N  = 200000
+N  = 500000
 alpha = 2.3e-28
 eps = 1e-7
 
@@ -53,7 +53,7 @@ def set_particle_params(M, posit):
 
             kl_arr[i]    = two_pi / 313e-9
             gamma_arr[i] = 20.0e6 * two_pi
-            S0_arr[i]    = 1
+            S0_arr[i]    = 10
             delta_arr[i] = -40.0e6 * two_pi
 
         else:
@@ -133,7 +133,7 @@ def cooling_step(v, S0, kl, gamma, delta, h):
 
 # --- 実行 ---
 M = 5
-x0s = np.linspace(-4e-5, 4e-5, M)
+x0s = np.linspace(-12e-6, 12e-6, M)
 v0s = 0.0
 posit = [1, 1, 1, 1, 1]
 
