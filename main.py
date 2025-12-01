@@ -2,12 +2,15 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from decimal import Decimal, getcontext
+import time
 
-getcontext().prec = 50  # 計算精度（桁数）を設定
+getcontext().prec = 50  # 計算精度
 
 # --- params ---
 dt = 1e-10 / 2
-N  = 500000
+N  = 5000
+w  = 2000              # 記録間隔（w ステップに 1 回記録）
+
 alpha = 2.3e-28
 eps = 1e-7
 
@@ -16,41 +19,46 @@ hbar = Decimal("1.054e-34")
 NA   = Decimal("6.02214076e23")
 
 # --- 初期化 ---
-def initialize_arrays_multi(M, N, dt, x0s, v0s=0.0):
-    t = np.linspace(0.0, N*dt, N+1)
+def initialize_arrays_multi(M, N, w, dt, x0s, v0s=0.0):
+
+    total_steps = N * w           # ← 計算する全ステップ数
+    t_end = total_steps * dt      # ← 記録された最終時刻
+
+    t = np.linspace(0.0, t_end, N + 1)   # ← 記録される N+1 個の時刻
+
     x0s = np.asarray(x0s, dtype=float)
     v0s = np.asarray(v0s, dtype=float)
 
-    if x0s.ndim == 0:
-        x0s = np.full(M, x0s, dtype=float)
-    if v0s.ndim == 0:
-        v0s = np.full(M, v0s, dtype=float)
+    if x0s.ndim == 0: x0s = np.full(M, x0s)
+    if v0s.ndim == 0: v0s = np.full(M, v0s)
 
-    x = np.empty((N+1, M), dtype=float)
-    v = np.empty((N+1, M), dtype=float)
+    x = np.empty((N+1, M))
+    v = np.empty((N+1, M))
+    f = np.empty((N+1, M))
+
     x[0, :] = x0s
     v[0, :] = v0s
+    f[0, :] = 0.0
 
-    return t, x, v
+    return t, x, v, f
 
 # --- 粒子種別パラメータ設定 ---
 def set_particle_params(M, posit):
-    m_arr     = np.empty(M, dtype=float)
-    k_arr     = np.empty(M, dtype=float)
-    kl_arr    = np.empty(M, dtype=float)
-    gamma_arr = np.empty(M, dtype=float)
-    S0_arr    = np.empty(M, dtype=float)
-    delta_arr = np.empty(M, dtype=float)
+    m_arr     = np.empty(M)
+    k_arr     = np.empty(M)
+    kl_arr    = np.empty(M)
+    gamma_arr = np.empty(M)
+    S0_arr    = np.empty(M)
+    delta_arr = np.empty(M)
 
     two_pi = 2.0 * math.pi
 
     for i in range(M):
         if posit[i] == 1:
             M_mol = Decimal("9e-3")
-            m_decimal = M_mol / NA
-            m_arr[i]  = float(m_decimal)
-            k_arr[i]     = (two_pi * 1e6) ** 2 * m_arr[i]
+            m_arr[i] = float(M_mol / NA)
 
+            k_arr[i]     = (two_pi * 1e6)**2 * m_arr[i]
             kl_arr[i]    = two_pi / 313e-9
             gamma_arr[i] = 20.0e6 * two_pi
             S0_arr[i]    = 10
@@ -66,85 +74,146 @@ def set_particle_params(M, posit):
 
     return m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr
 
-# --- オイラー法 ---
-def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
+# --- 冷却力 ---
+def cooling_step(v, S0, kl, gamma, delta, h):
+    denom = (S0 + 1.0 + 4.0/(gamma**2)*(delta - kl*v)**2)
+    return h * gamma * S0 / 2.0 / denom * kl
+
+# --- オイラー法（最適化バージョン） ---
+def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
 
     M = x.shape[1]
     hbar_f = float(hbar)
-    f = np.zeros((N+1, M), dtype=float)# 時間発展の f(t,i)
 
-    for n in range(N):
-        a = -(k[:] / m[:]) * x[n, :].copy()
+    x_now = x[0, :].copy()
+    v_now = v[0, :].copy()
+    f_now = np.zeros(M, dtype=float)
 
+    record_index = 1
+
+    for step in range(1, N*w + 1):
+
+        # -----------------------------
+        # ① 調和力
+        # -----------------------------
+        a = -(k / m) * x_now
+
+        # -----------------------------
+        # ② 粒子間相互作用（ベクトル化）
+        # -----------------------------
+        dx = x_now[np.newaxis, :] - x_now[:, np.newaxis]   # (M, M)
+        np.fill_diagonal(dx, 0.0)
+
+        r3 = np.abs(dx)**3 + eps**3
+        a_int = -(alpha / m) * np.sum(dx / r3, axis=1)
+
+        a += a_int
+
+        # -----------------------------
+        # ③ 冷却力（1粒子ずつ）
+        # -----------------------------
         for i in range(M):
-            ai = 0.0
-            xi = x[n, i]
+            f_now[i] = cooling_step(v_now[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
 
-            for j in range(M):
-                if j == i:
-                    continue
-                dx = x[n, j] - xi
-                r3 = abs(dx ** 3)
-                ai += -(alpha / m[i]) * dx / (r3 + eps**3)
+        a += f_now / m
 
-            a[i] += ai
-            f[n,i] = cooling_step(v[n,i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
-            a[i] += f[n,i] / m[i]
-            # f[n,i] = a[i]
+        # -----------------------------
+        # ④ Euler 更新
+        # -----------------------------
+        v_now = v_now + dt * a
+        x_now = x_now + dt * v_now
 
-        v[n+1, :] = v[n, :] + dt * a[:]
-        x[n+1, :] = x[n, :] + dt * v[n+1, :]
+        # -----------------------------
+        # ⑤ 記録 (w ステップごと)
+        # -----------------------------
+        if step % w == 0:
+            idx = record_index
+            x[idx, :] = x_now
+            v[idx, :] = v_now
+            f[idx, :] = f_now
+            record_index += 1
 
     return x, v, f
 # --- 4次ルンゲクッタ法 ---
-def rk4_step_multi(m, k, x, v, dt, N, S0, kl, gamma, delta):
+def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
 
-    hbar_f = float(hbar)
     M = x.shape[1]
+    hbar_f = float(hbar)
 
-    f_arr = np.zeros((N+1, M), dtype=float)
+    # 現在値（1×M）
+    x_now = x[0, :].copy()
+    v_now = v[0, :].copy()
+    f_now = np.zeros(M, dtype=float)
+
+    # 記録インデックス
+    record_index = 1
+
+    # ---- 内部で使う加速度計算関数 ----
     def calc_accel(xn, vn):
-        dxdt = vn
-        dx = xn[np.newaxis, :] - xn[:, np.newaxis]  # (M, M)
+        # ① 調和力
+        a = -(k / m) * xn
+
+        # ② 粒子間相互作用（ベクトル化）
+        dx = xn[np.newaxis, :] - xn[:, np.newaxis]
         np.fill_diagonal(dx, 0.0)
-        r3 = np.abs(dx**3)
-        a_int = -(alpha / m) * np.sum(dx / (r3 + eps**3), axis=1)
+        r3 = np.abs(dx)**3 + eps**3
+        a_int = -(alpha / m) * np.sum(dx / r3, axis=1)
+        a += a_int
 
-        f_cool = np.zeros(M, dtype=float)
+        # ③ 冷却力
+        f_tmp = np.zeros(M)
         for i in range(M):
-            if gamma[i] != 0.0 and kl[i] != 0.0 and S0[i] != 0.0:
-                f_cool[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
-            else:
-                f_cool[i] = 0.0
-        dvdt = -(k / m) * xn + a_int + f_cool / m
-        return dxdt, dvdt, f_cool
+            f_tmp[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
 
-    for n in range(N):
-        xn, vn = x[n, :], v[n, :]
+        a += f_tmp / m
+        return a, f_tmp
 
-        k1x, k1v, f1 = calc_accel(xn, vn)
-        k2x, k2v, f2 = calc_accel(
-            xn + 0.5*dt*k1x,
-            vn + 0.5*dt*k1v
-        )
-        k3x, k3v, f3 = calc_accel(
-            xn + 0.5*dt*k2x,
-            vn + 0.5*dt*k2v
-        )
-        k4x, k4v, f4 = calc_accel(
-            xn + dt*k3x,
-            vn + dt*k3v
-        )
-        x[n+1, :] = xn + (dt/6.0) * (k1x + 2*k2x + 2*k3x + k4x)
-        v[n+1, :] = vn + (dt/6.0) * (k1v + 2*k2v + 2*k3v + k4v)
-        f_arr[n, :] = (f1 + 2*f2 + 2*f3 + f4) / 6.0
+    # ---- 時間発展 ----
+    total_steps = N * w
+    for step in range(1, total_steps + 1):
 
-    return x, v, f_arr
+        # ----- k1 -----
+        a1, f1 = calc_accel(x_now, v_now)
+        k1x = v_now
+        k1v = a1
 
-def cooling_step(v, S0, kl, gamma, delta, h):
-    denom = (S0 + 1.0 + 4.0 / (gamma ** 2) * (delta - kl * v) ** 2)
-    f = h * gamma * S0 / 2.0 / denom * kl
-    return f
+        # ----- k2 -----
+        x2 = x_now + 0.5 * dt * k1x
+        v2 = v_now + 0.5 * dt * k1v
+        a2, _ = calc_accel(x2, v2)
+        k2x = v2
+        k2v = a2
+
+        # ----- k3 -----
+        x3 = x_now + 0.5 * dt * k2x
+        v3 = v_now + 0.5 * dt * k2v
+        a3, _ = calc_accel(x3, v3)
+        k3x = v3
+        k3v = a3
+
+        # ----- k4 -----
+        x4 = x_now + dt * k3x
+        v4 = v_now + dt * k3v
+        a4, f4 = calc_accel(x4, v4)
+        k4x = v4
+        k4v = a4
+
+        # ---- RK4 更新 ----
+        x_now = x_now + (dt / 6.0) * (k1x + 2*k2x + 2*k3x + k4x)
+        v_now = v_now + (dt / 6.0) * (k1v + 2*k2v + 2*k3v + k4v)
+
+        # 冷却力は k4 の f を代表値とする
+        f_now = f4.copy()
+
+        # ---- 記録処理 ----
+        if step % w == 0:
+            idx = record_index
+            x[idx, :] = x_now
+            v[idx, :] = v_now
+            f[idx, :] = f_now
+            record_index += 1
+
+    return x, v, f
 
 # --- 実行 ---
 M = 5
@@ -152,18 +221,16 @@ x0s = np.linspace(-12e-6, 12e-6, M)
 v0s = 0.0
 posit = [1, 1, 1, 1, 1]
 
+start_time = time.time()
+
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
-t, xM, vM = initialize_arrays_multi(M, N, dt, x0s, v0s)
+t, xM, vM, f = initialize_arrays_multi(M, N, w, dt, x0s, v0s)
 
 # xM, vM, f = euler_step_multi(
-#     m_arr, k_arr, xM, vM, dt, N,
-#     alpha=alpha, eps=eps,
-#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+#     m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
 # )
-
-xM, vM , f = rk4_step_multi(
-    m_arr, k_arr, xM, vM, dt, N,
-    S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+xM, vM, f = rk4_step_multi(
+    m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
 )
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
@@ -215,6 +282,14 @@ fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
 plt.show()
 
 print(f"Saved f-t figure to: {save_path_f}")
+
+total_steps = N * w
+T_total = total_steps * dt
+print(f"Total simulated time = {T_total:.6e} s")
+
+end_time = time.time()
+elapsed = end_time - start_time
+print(f"Execution time = {elapsed:.3f} s")
 
 # from ipywidgets import interact
 
