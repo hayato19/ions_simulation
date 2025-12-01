@@ -96,7 +96,6 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
         x[n+1, :] = x[n, :] + dt * v[n+1, :]
 
     return x, v, f
-
 # --- 4次ルンゲクッタ法 ---
 def rk4_step_multi(m, k, x, v, dt, N, S0, kl, gamma, delta):
 
@@ -107,19 +106,26 @@ def rk4_step_multi(m, k, x, v, dt, N, S0, kl, gamma, delta):
         # dx[i, j] = x_j - x_i
         dx = xn[np.newaxis, :] - xn[:, np.newaxis]   # (M, M)
         np.fill_diagonal(dx, 0.0)                    # 自己項を0に
-        r3 = abs(dx ** 3)                            # 相対変位３乗
-        a_int = -(alpha/m) * np.sum(dx / (r3 + eps ** 3), axis=1)
-        f = cooling_step(dxdt,S0[:],kl[:],gamma[:],delta[:], hbar_f)
-        dvdt = -(k/m) * xn + a_int
+        r3 = np.abs(dx ** 3)                         # 相対変位３乗
+        a_int = -(alpha / m) * np.sum(dx / (r3 + eps ** 3), axis=1)
+
+        # ---- 冷却力（各粒子ごとに cooling_step を使って計算）----
+        f_cool = np.zeros_like(xn)
+        for i in range(xn.shape[0]):
+            if gamma[i] != 0.0 and kl[i] != 0.0 and S0[i] != 0.0:
+                f_cool[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
+            else:
+                f_cool[i] = 0.0
+        dvdt = -(k / m) * xn + a_int + f_cool / m
         return dxdt, dvdt
 
     for n in range(N):
         xn, vn = x[n, :], v[n, :]
 
-        k1x, k1v = f(xn, vn, S0, kl, gamma, delta)
-        k2x, k2v = f(xn + 0.5*dt*k1x, vn + 0.5*dt*k1v, S0, kl, gamma, delta)
-        k3x, k3v = f(xn + 0.5*dt*k2x, vn + 0.5*dt*k2v, S0, kl, gamma, delta)
-        k4x, k4v = f(xn + dt*k3x,     vn + dt*k3v, S0, kl, gamma, delta)
+        k1x, k1v = f(xn,               vn,               S0, kl, gamma, delta)
+        k2x, k2v = f(xn + 0.5*dt*k1x,  vn + 0.5*dt*k1v, S0, kl, gamma, delta)
+        k3x, k3v = f(xn + 0.5*dt*k2x,  vn + 0.5*dt*k2v, S0, kl, gamma, delta)
+        k4x, k4v = f(xn + dt*k3x,      vn + dt*k3v,     S0, kl, gamma, delta)
 
         x[n+1, :] = xn + (dt/6.0) * (k1x + 2*k2x + 2*k3x + k4x)
         v[n+1, :] = vn + (dt/6.0) * (k1v + 2*k2v + 2*k3v + k4v)
@@ -140,16 +146,16 @@ posit = [1, 1, 1, 1, 1]
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM = initialize_arrays_multi(M, N, dt, x0s, v0s)
 
-xM, vM, f = euler_step_multi(
-    m_arr, k_arr, xM, vM, dt, N,
-    alpha=alpha, eps=eps,
-    S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
-)
-
-# xM, vM = rk4_step_multi(
+# xM, vM, f = euler_step_multi(
 #     m_arr, k_arr, xM, vM, dt, N,
+#     alpha=alpha, eps=eps,
 #     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
 # )
+
+xM, vM = rk4_step_multi(
+    m_arr, k_arr, xM, vM, dt, N,
+    S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+)
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
 
@@ -187,19 +193,19 @@ plt.show()
 print(f"Saved x-t figure to: {save_path_x}")
 
 # --- f(t) プロット ---
-fig_f = plt.figure()
-for j in range(M):
-    plt.plot(t, f[:, j], label=f'particle {j}')
-plt.title('Radiation force (f vs t)')
-plt.xlabel('Time t [s]')
-plt.ylabel('f(t)')
-plt.grid(True)
-plt.legend(ncol=2)
-plt.tight_layout()
-fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
-plt.show()
-
-print(f"Saved f-t figure to: {save_path_f}")
+# fig_f = plt.figure()
+# for j in range(M):
+#     plt.plot(t, f[:, j], label=f'particle {j}')
+# plt.title('Radiation force (f vs t)')
+# plt.xlabel('Time t [s]')
+# plt.ylabel('f(t)')
+# plt.grid(True)
+# plt.legend(ncol=2)
+# plt.tight_layout()
+# fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
+# plt.show()
+#
+# print(f"Saved f-t figure to: {save_path_f}")
 
 # from ipywidgets import interact
 
