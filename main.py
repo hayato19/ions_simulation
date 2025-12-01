@@ -10,6 +10,7 @@ dt = 1e-10 / 2
 N  = 500000
 alpha = 2.3e-28
 eps = 1e-7
+w = 2
 
 # 物理定数
 hbar = Decimal("1.054e-34")
@@ -71,29 +72,38 @@ def euler_step_multi(m, k, x, v, dt, N, alpha, eps, S0, kl, gamma, delta):
 
     M = x.shape[1]
     hbar_f = float(hbar)
-    f = np.zeros((N+1, M), dtype=float)# 時間発展の f(t,i)
+    f = np.zeros((N+1, M), dtype=float)
+    x_now = x[0, :].copy()   # 初期位置
+    v_now = v[0, :].copy()   # 初期速度
 
+    # 初期時刻の記録
+    x[0, :] = x_now
+    v[0, :] = v_now
+    f[0, :] = 0.0
+    # ---- 時間発展ループ ----
     for n in range(N):
-        a = -(k[:] / m[:]) * x[n, :].copy()
 
+        a = -(k[:] / m[:]) * x_now.copy()
         for i in range(M):
             ai = 0.0
-            xi = x[n, i]
+            xi = x_now[i]
 
             for j in range(M):
                 if j == i:
                     continue
-                dx = x[n, j] - xi
+                dx = x_now[j] - xi
                 r3 = abs(dx ** 3)
                 ai += -(alpha / m[i]) * dx / (r3 + eps**3)
 
             a[i] += ai
-            f[n,i] = cooling_step(v[n,i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
-            a[i] += f[n,i] / m[i]
-            # f[n,i] = a[i]
+            f_val = cooling_step(v_now[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
+            a[i] += f_val / m[i]
+            f[n+1, i] = f_val
+        v_now = v_now + dt * a
+        x_now = x_now + dt * v_now
 
-        v[n+1, :] = v[n, :] + dt * a[:]
-        x[n+1, :] = x[n, :] + dt * v[n+1, :]
+        x[n+1, :] = x_now
+        v[n+1, :] = v_now
 
     return x, v, f
 # --- 4次ルンゲクッタ法 ---
@@ -155,16 +165,16 @@ posit = [1, 1, 1, 1, 1]
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM = initialize_arrays_multi(M, N, dt, x0s, v0s)
 
-# xM, vM, f = euler_step_multi(
-#     m_arr, k_arr, xM, vM, dt, N,
-#     alpha=alpha, eps=eps,
-#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
-# )
-
-xM, vM , f = rk4_step_multi(
+xM, vM, f = euler_step_multi(
     m_arr, k_arr, xM, vM, dt, N,
+    alpha=alpha, eps=eps,
     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
 )
+
+# xM, vM , f = rk4_step_multi(
+#     m_arr, k_arr, xM, vM, dt, N,
+#     S0=S0_arr, kl=kl_arr, gamma=gamma_arr, delta=delta_arr
+# )
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
 
