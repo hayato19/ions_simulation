@@ -1,18 +1,26 @@
 import numpy as np
 import math
+import random
 import matplotlib.pyplot as plt
 from decimal import Decimal, getcontext
 import time
+
+from gmpy2 import square
 
 getcontext().prec = 50  # 計算精度
 
 # --- params ---
 dt = 1e-10 / 2
 N  = 5000
-w  = 2000              # 記録間隔（w ステップに 1 回記録）
+w  = 200              # 記録間隔（w ステップに 1 回記録）
 
 alpha = 2.3e-28
 eps = 1e-7
+
+# ---- heating parameters ----
+ht  = 10 * w      # heating 間隔
+ips = 0.5         # scattering param
+v_th = 1e-5       # v=0の閾値
 
 # 物理定数
 hbar = Decimal("1.054e-34")
@@ -74,13 +82,25 @@ def set_particle_params(M, posit):
 
     return m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr
 
+def calculate_rho(v, S0, kl, gamma, delta):
+    rho = S0 / 2 / (S0 + 1.0 + 4.0 / (gamma ** 2) * (delta - kl * v) ** 2)
+    return rho
+
 # --- 冷却力 ---
 def cooling_step(v, S0, kl, gamma, delta, h):
-    denom = (S0 + 1.0 + 4.0/(gamma**2)*(delta - kl*v)**2)
-    return h * gamma * S0 / 2.0 / denom * kl
+    rho = calculate_rho(v, S0, kl, gamma, delta)
+    return h * gamma * rho * kl
+
+def heating_step(v, S0, kl, gamma, delta, h, m, ips, ht):
+    rho = calculate_rho(v, S0, kl, gamma, delta)
+    E = (h * kl) ** 2 / (2 * m) * gamma * rho * (1 + ips)
+    o = square(2 * E * ht / m)
+    u = math.cos(random.uniform(0, 2 * math.pi))
+    return o * u
+
 
 # --- オイラー法（最適化バージョン） ---
-def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
+def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta, ips, ht, v_th):
 
     M = x.shape[1]
     hbar_f = float(hbar)
@@ -90,42 +110,41 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
     f_now = np.zeros(M, dtype=float)
 
     record_index = 1
+    count = 0
 
     for step in range(1, N*w + 1):
 
-        # -----------------------------
         # ① 調和力
-        # -----------------------------
         a = -(k / m) * x_now
 
-        # -----------------------------
         # ② 粒子間相互作用（ベクトル化）
-        # -----------------------------
-        dx = x_now[np.newaxis, :] - x_now[:, np.newaxis]   # (M, M)
+        dx = x_now[np.newaxis, :] - x_now[:, np.newaxis]
         np.fill_diagonal(dx, 0.0)
-
         r3 = np.abs(dx)**3 + eps**3
         a_int = -(alpha / m) * np.sum(dx / r3, axis=1)
-
         a += a_int
 
-        # -----------------------------
-        # ③ 冷却力（1粒子ずつ）
-        # -----------------------------
+        # ③ 冷却力
         for i in range(M):
             f_now[i] = cooling_step(v_now[i], S0[i], kl[i], gamma[i], delta[i], hbar_f)
 
         a += f_now / m
 
-        # -----------------------------
         # ④ Euler 更新
-        # -----------------------------
         v_now = v_now + dt * a
         x_now = x_now + dt * v_now
 
-        # -----------------------------
-        # ⑤ 記録 (w ステップごと)
-        # -----------------------------
+        # ⑤ Heating：一定ステップごと＋基底状態（v=0）の粒子のみ
+        if step % ht == 0:
+            for i in range(M):
+                if abs(v_now[i]) < v_th:
+                    v_now[i] += heating_step(
+                        v_now[i], S0[i], kl[i], gamma[i], delta[i],
+                        hbar_f, m[i], ips, ht
+                    )
+                    count += 1
+
+        # ⑥ 記録
         if step % w == 0:
             idx = record_index
             x[idx, :] = x_now
@@ -133,7 +152,7 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
             f[idx, :] = f_now
             record_index += 1
 
-    return x, v, f
+    return x, v, f, count
 # --- 4次ルンゲクッタ法 ---
 def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
 
@@ -226,12 +245,12 @@ start_time = time.time()
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM, f = initialize_arrays_multi(M, N, w, dt, x0s, v0s)
 
-# xM, vM, f = euler_step_multi(
+xM, vM, f, count = euler_step_multi(
+    m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr, ips, ht, v_th
+)
+# xM, vM, f = rk4_step_multi(
 #     m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
 # )
-xM, vM, f = rk4_step_multi(
-    m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
-)
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
 
 
@@ -290,6 +309,8 @@ print(f"Total simulated time = {T_total:.6e} s")
 end_time = time.time()
 elapsed = end_time - start_time
 print(f"Execution time = {elapsed:.3f} s")
+
+print("Heating executed:", count, "times")
 
 # from ipywidgets import interact
 
