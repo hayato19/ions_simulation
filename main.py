@@ -10,7 +10,7 @@ from gmpy2 import square
 getcontext().prec = 50  # 計算精度
 
 # --- params ---
-dt = 1e-10 / 2
+dt = 1e-10 / 2        #0.05ns
 N  = 5000
 w  = 200              # 記録間隔（w ステップに 1 回記録）
 
@@ -18,8 +18,8 @@ alpha = 2.3e-28
 eps = 1e-7
 
 # ---- heating parameters ----
-ht  = 10 * w      # heating 間隔
-ips = 0.5         # scattering param
+ht  = 1000      # heating 判定間隔 = dt * ht
+ips = 0         # scattering param
 v_th = 1e-5       # v=0の閾値
 
 # 物理定数
@@ -91,16 +91,17 @@ def cooling_step(v, S0, kl, gamma, delta, h):
     rho = calculate_rho(v, S0, kl, gamma, delta)
     return h * gamma * rho * kl
 
-def heating_step(v, S0, kl, gamma, delta, h, m, ips, ht):
+def heating_step(v, S0, kl, gamma, delta, h, m, ips, ht, dt):
     rho = calculate_rho(v, S0, kl, gamma, delta)
     E = (h * kl) ** 2 / (2 * m) * gamma * rho * (1 + ips)
-    o = square(2 * E * ht / m)
+    o = np.sqrt(2 * E * ht * dt / m)
     u = math.cos(random.uniform(0, 2 * math.pi))
     return o * u
 
 
 # --- オイラー法（最適化バージョン） ---
-def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta, ips, ht, v_th):
+def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
+                     S0, kl, gamma, delta, ips, ht, v_th):
 
     M = x.shape[1]
     hbar_f = float(hbar)
@@ -110,14 +111,19 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta, 
     f_now = np.zeros(M, dtype=float)
 
     record_index = 1
-    count = 0
+
+    # -------------------------------------
+    # ★ heating のログを保存するリスト
+    # (step, particle_index, dv_value)
+    # -------------------------------------
+    heating_log = []
 
     for step in range(1, N*w + 1):
 
         # ① 調和力
         a = -(k / m) * x_now
 
-        # ② 粒子間相互作用（ベクトル化）
+        # ② 粒子間相互作用
         dx = x_now[np.newaxis, :] - x_now[:, np.newaxis]
         np.fill_diagonal(dx, 0.0)
         r3 = np.abs(dx)**3 + eps**3
@@ -134,15 +140,22 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta, 
         v_now = v_now + dt * a
         x_now = x_now + dt * v_now
 
-        # ⑤ Heating：一定ステップごと＋基底状態（v=0）の粒子のみ
+        # ⑤ Heating：一定ステップごと
         if step % ht == 0:
             for i in range(M):
                 if abs(v_now[i]) < v_th:
-                    v_now[i] += heating_step(
+
+                    # heating 値を計算
+                    dv = heating_step(
                         v_now[i], S0[i], kl[i], gamma[i], delta[i],
-                        hbar_f, m[i], ips, ht
+                        hbar_f, m[i], ips, ht, dt
                     )
-                    count += 1
+
+                    # apply heating
+                    v_now[i] += dv
+
+                    # ★ログに追加 (step, particle, dv)
+                    heating_log.append((step, i, float(dv)))
 
         # ⑥ 記録
         if step % w == 0:
@@ -152,7 +165,8 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta, 
             f[idx, :] = f_now
             record_index += 1
 
-    return x, v, f, count
+    # ★heating_log を返す
+    return x, v, f, heating_log
 # --- 4次ルンゲクッタ法 ---
 def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
 
@@ -234,6 +248,63 @@ def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps, S0, kl, gamma, delta):
 
     return x, v, f
 
+def plot_x_range(t, xM, t_start, t_end, particle_index,
+                 save_dir="./figs"):
+    """
+    ★ 指定した粒子 1 個だけをプロットする関数 ★
+
+    Parameters:
+        t  : 時間配列 (N+1)
+        xM : 位置配列 (N+1, M)
+        t_start, t_end: 描画したい時間範囲 [s]
+        particle_index: プロット対象の粒子番号 (0 ～ M-1)
+        save_dir: 保存先ディレクトリ
+    """
+
+    # --- 粒子番号チェック ---
+    M = xM.shape[1]
+    if not (0 <= particle_index < M):
+        print(f"particle_index={particle_index} が範囲外 (0〜{M-1})")
+        return
+
+    # --- 時間インデックス抽出 ---
+    idx = np.where((t >= t_start) & (t <= t_end))[0]
+    if len(idx) == 0:
+        print("指定した時間範囲にデータがありません")
+        return
+
+    # --- 保存名 ---
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_name = (
+        f"x_particle{particle_index}"
+        f"_{t_start:.2e}_{t_end:.2e}_{timestamp}.png"
+    )
+    save_path = os.path.join(save_dir, save_name)
+
+    # --- プロット ---
+    plt.figure(figsize=(16,5))
+
+    plt.plot(
+        t[idx],
+        xM[idx, particle_index],
+        label=f"particle {particle_index}",
+        lw=1.5
+    )
+
+    plt.title(
+        f"x(t) for particle {particle_index} "
+        f"(range {t_start:.2e}–{t_end:.2e} s)"
+    )
+    plt.xlabel("Time [s]")
+    plt.ylabel("x(t)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    plt.savefig(save_path, dpi=200, bbox_inches='tight')
+    plt.show()
+
+    print("Saved range figure:", save_path)
 # --- 実行 ---
 M = 5
 x0s = np.linspace(-12e-6, 12e-6, M)
@@ -245,13 +316,22 @@ start_time = time.time()
 m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr = set_particle_params(M, posit)
 t, xM, vM, f = initialize_arrays_multi(M, N, w, dt, x0s, v0s)
 
-xM, vM, f, count = euler_step_multi(
-    m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr, ips, ht, v_th
+xM, vM, f, heating_log = euler_step_multi(
+    m_arr, k_arr, xM, vM, f, dt, N, w,
+    alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
+    ips, ht, v_th
 )
+
+print("Heating executed:", len(heating_log), "times")
 # xM, vM, f = rk4_step_multi(
 #     m_arr, k_arr, xM, vM, f, dt, N, w, alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
 # )
 print(f"t_final = {t[-1]:.3f}  |  x_last (per particle) = {xM[-1, :]}")
+
+print("Heating log (first 10 entries):")
+for item in heating_log[:10]:
+    step, i, dv = item
+    print(f" step={step}, particle={i}, dv={dv:.3e}")
 
 
 import os
@@ -287,20 +367,20 @@ plt.show()
 
 print(f"Saved x-t figure to: {save_path_x}")
 
-# --- f(t) プロット ---
-fig_f = plt.figure()
-for j in range(M):
-    plt.plot(t, f[:, j], label=f'particle {j}')
-plt.title('Radiation force (f vs t)')
-plt.xlabel('Time t [s]')
-plt.ylabel('f(t)')
-plt.grid(True)
-plt.legend(ncol=2)
-plt.tight_layout()
-fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
-plt.show()
-
-print(f"Saved f-t figure to: {save_path_f}")
+# # --- f(t) プロット ---
+# fig_f = plt.figure()
+# for j in range(M):
+#     plt.plot(t, f[:, j], label=f'particle {j}')
+# plt.title('Radiation force (f vs t)')
+# plt.xlabel('Time t [s]')
+# plt.ylabel('f(t)')
+# plt.grid(True)
+# plt.legend(ncol=2)
+# plt.tight_layout()
+# fig_f.savefig(save_path_f, dpi=plt.rcParams['figure.dpi'], bbox_inches='tight')
+# plt.show()
+#
+# print(f"Saved f-t figure to: {save_path_f}")
 
 total_steps = N * w
 T_total = total_steps * dt
@@ -310,7 +390,7 @@ end_time = time.time()
 elapsed = end_time - start_time
 print(f"Execution time = {elapsed:.3f} s")
 
-print("Heating executed:", count, "times")
+plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
 # from ipywidgets import interact
 
