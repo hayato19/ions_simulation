@@ -17,7 +17,6 @@ eps   = 1e-7          # 発散防止のための微小数
 # ---- heating parameters ----
 ht  = 1000      # heating 判定間隔
 ips = 0         # scattering param
-v_th = 1e-5     # v=0 の閾値
 
 # --- physical constants ---
 hbar = Decimal("1.054e-34")     # ディラック定数

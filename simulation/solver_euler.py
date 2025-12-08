@@ -2,7 +2,7 @@ import numpy as np
 from simulation.forces import cooling_step, heating_step
 
 def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
-                     S0, kl, gamma, delta, ips, ht, v_th):
+                     S0, kl, gamma, delta, ips, ht):
 
     M = x.shape[1]
     x_now = x[0, :].copy()

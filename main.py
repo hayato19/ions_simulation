@@ -10,8 +10,9 @@ from plotting.plot_full import plot_full_x, plot_full_f
 # ======================================
 #  シミュレーション方式の選択
 # ======================================
-USE_SOLVER = "euler"   # "euler" または "rk4"
-# USE_SOLVER = "rk4"
+# "euler" または "rk4"
+# USE_SOLVER = "euler"
+USE_SOLVER = "rk4"
 
 if USE_SOLVER == "euler":
     from simulation.solver_euler import euler_step_multi
@@ -45,7 +46,7 @@ if USE_SOLVER == "euler":
     xM, vM, f, heating_log = euler_step_multi(
         m_arr, k_arr, xM, vM, f, dt, N, w,
         alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
-        ips, ht, v_th
+        ips, ht
     )
     print("Heating executed:", len(heating_log))
 
@@ -53,7 +54,8 @@ elif USE_SOLVER == "rk4":
     print("=== Solver: RK4法 ===")
     xM, vM, f = rk4_step_multi(
         m_arr, k_arr, xM, vM, f, dt, N, w,
-        alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr
+        alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
+        ips, ht
     )
 
 
@@ -63,7 +65,7 @@ print(f"t_final = {t[-1]:.3e} s")
 
 
 # 可視化例（粒子2、時間範囲3e-5〜t_end）
-# plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
+plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
 #可視化(全粒子位置、全時間範囲)
 plot_full_x(t, xM, save_dir="./figs")
