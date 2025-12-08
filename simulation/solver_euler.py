@@ -1,5 +1,5 @@
 import numpy as np
-from simulation.forces import cooling_step, heating_step
+from simulation.forces import cooling_step, heating_step, calculate_rho
 
 def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
                      S0, kl, gamma, delta, ips, ht):
@@ -8,6 +8,7 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
     x_now = x[0, :].copy()
     v_now = v[0, :].copy()
     f_now = np.zeros(M)
+    r = np.zeros_like(x)
 
     record_index = 1
     heating_log = []
@@ -40,6 +41,8 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
             x[record_index, :] = x_now
             v[record_index, :] = v_now
             f[record_index, :] = f_now
+            r[record_index, :] = calculate_rho(v_now[:], S0[:], kl[:], gamma[:], delta[:])
             record_index += 1
 
-    return x, v, f, heating_log
+
+    return x, v, f, heating_log, r
