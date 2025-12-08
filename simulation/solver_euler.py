@@ -9,6 +9,8 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
     v_now = v[0, :].copy()
     f_now = np.zeros(M)
     r = np.zeros_like(x)
+    e = np.zeros(N + 1)
+    e[0] = np.sum(0.5 * m * v_now ** 2 + 0.5 * k * x_now ** 2)
 
     record_index = 1
     heating_log = []
@@ -42,7 +44,10 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
             v[record_index, :] = v_now
             f[record_index, :] = f_now
             r[record_index, :] = calculate_rho(v_now[:], S0[:], kl[:], gamma[:], delta[:])
+            e[record_index] = np.sum(
+                0.5 * m * v_now ** 2 + 0.5 * k * x_now ** 2
+            )
             record_index += 1
 
 
-    return x, v, f, heating_log, r
+    return x, v, f, heating_log, r, e
