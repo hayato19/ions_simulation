@@ -5,14 +5,14 @@ from simulation.params import dt, N, w, alpha, eps, ips, ht
 from simulation.initialize import initialize_arrays_multi
 from simulation.particle_params import set_particle_params
 from plotting.plot_x_range import plot_x_range
-from plotting.plot_full import plot_full_x, plot_full_f
+from plotting.plot_full import plot_full_x, plot_full_f, plot_full_rho
 
 # ======================================
 #  シミュレーション方式の選択
 # ======================================
 # "euler" または "rk4"
-# USE_SOLVER = "euler"
-USE_SOLVER = "rk4"
+USE_SOLVER = "euler"
+# USE_SOLVER = "rk4"
 
 if USE_SOLVER == "euler":
     from simulation.solver_euler import euler_step_multi
@@ -43,7 +43,7 @@ t, xM, vM, f = initialize_arrays_multi(M, N, w, dt, x0s, v0s)
 
 if USE_SOLVER == "euler":
     print("=== Solver: Euler法 ===")
-    xM, vM, f, heating_log = euler_step_multi(
+    xM, vM, f, heating_log, r = euler_step_multi(
         m_arr, k_arr, xM, vM, f, dt, N, w,
         alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
         ips, ht
@@ -52,7 +52,7 @@ if USE_SOLVER == "euler":
 
 elif USE_SOLVER == "rk4":
     print("=== Solver: RK4法 ===")
-    xM, vM, f, heating_log = rk4_step_multi(
+    xM, vM, f, heating_log, r = rk4_step_multi(
         m_arr, k_arr, xM, vM, f, dt, N, w,
         alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
         ips, ht
@@ -72,3 +72,6 @@ plot_full_x(t, xM, save_dir="./figs")
 
 #可視化(全粒子の受ける力、全時間範囲)
 # plot_full_f(t, xM, save_dir="./figs")
+
+#可視化(全粒子ρ、全時間範囲)
+# plot_full_rho(t, r, save_dir="./figs")
