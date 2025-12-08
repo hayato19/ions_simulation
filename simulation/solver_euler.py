@@ -31,11 +31,10 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
 
         if step % ht == 0:
             for i in range(M):
-                if abs(v_now[i]) < v_th:
-                    dv = heating_step(v_now[i], S0[i], kl[i], gamma[i], delta[i],
-                                      m[i], ips, ht, dt)
-                    v_now[i] += dv
-                    heating_log.append((step, i, float(dv)))
+                dv = heating_step(v_now[i], S0[i], kl[i], gamma[i], delta[i],
+                                  m[i], ips, ht, dt)
+                v_now[i] += dv
+                heating_log.append((step, i, float(dv)))
 
         if step % w == 0:
             x[record_index, :] = x_now

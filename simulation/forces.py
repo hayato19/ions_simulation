@@ -11,7 +11,7 @@ def cooling_step(v, S0, kl, gamma, delta):##放射圧冷却力の計算
     return float(hbar) * gamma * rho * kl
 
 def heating_step(v, S0, kl, gamma, delta, m, ips, ht, dt):##励起時の加熱の計算
-    rho = calculate_rho(v, S0, kl, gamma, delta)
+    rho = calculate_rho(0, S0, kl, gamma, delta)
     E = (float(hbar)*kl)**2 / (2*m) * gamma * rho * (1+ips)
     o = np.sqrt(2 * E * ht * dt / m)
     u = math.cos(random.uniform(0, 2*math.pi))
