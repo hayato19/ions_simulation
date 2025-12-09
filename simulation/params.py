@@ -6,9 +6,9 @@ from decimal import Decimal, getcontext
 getcontext().prec = 50  # 計算精度
 
 # --- params ---
-dt = 1e-10 / 2        # 時間刻み（0.05ns）
-N  = 5000             # 記録数
-w  = 200              # 記録間隔（w ステップに 1 回記録）
+dt = 3e-9        # 時間刻み（0.05ns）
+N  = 500             # 記録数
+w  = 50              # 記録間隔（w ステップに 1 回記録）
                       # ステップ数　= N * w
 
 alpha = 2.3e-28       # クーロン反発の係数
