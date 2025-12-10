@@ -21,7 +21,7 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
 
     max_amp = 0.0
 
-    # ★ 各粒子の上位5ピーク周波数を溜めるリスト
+    # 各粒子の上位5ピーク周波数を溜めるリスト
     peak_freq_global = []
 
     for j in range(M):
@@ -37,7 +37,7 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
         # FFT プロット
         plt.plot(f_pos, amp_pos, label=f"p{j}")
 
-        # ★ 振幅で降順ソート → 上位5つを抽出
+        # 振幅で降順ソート → 上位5つを抽出
         idx_sorted = np.argsort(amp_pos)[::-1]
         top5_idx = idx_sorted[:5]
 
@@ -57,19 +57,19 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
 
     print("Saved FFT figure:", save_path)
 
-    # ★ ヒストグラム表示
-    plt.figure(figsize=(8, 5))
-    plt.hist(peak_freq_global, bins=30, color='skyblue', edgecolor='black')
-    plt.xlabel("frequency [Hz]")
-    plt.ylabel("count")
-    plt.title("Histogram of Top 5 FFT Peaks (All Particles)")
-    plt.tight_layout()
-    plt.savefig(save_hist_path, dpi=200)
-    plt.show()
+    # # ヒストグラム表示
+    # plt.figure(figsize=(8, 5))
+    # plt.hist(peak_freq_global, bins=30, color='skyblue', edgecolor='black')
+    # plt.xlabel("frequency [Hz]")
+    # plt.ylabel("count")
+    # plt.title("Histogram of Top 5 FFT Peaks (All Particles)")
+    # plt.tight_layout()
+    # plt.savefig(save_hist_path, dpi=200)
+    # plt.show()
+    #
+    # print("Saved histogram:", save_hist_path)
 
-    print("Saved histogram:", save_hist_path)
-
-    # ★ 上位5ピークの周波数値（全粒子合計）の中から大きい順に 5 つ表示
+    # 上位5ピークの周波数値（全粒子合計）の中から大きい順に 5 つ表示
     print("\n=== Global Top 5 Peak Frequencies ===")
     peak_freq_global = np.array(peak_freq_global)
     idx_top5_global = np.argsort(peak_freq_global)[-5:]   # 大きい順TOP5
