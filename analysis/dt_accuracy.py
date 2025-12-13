@@ -17,6 +17,7 @@ dt_list = np.array([
     1e-10,   # 非常に小さい dt（限界の下限を確認）
     3e-10,
     1e-9,
+    3e-9,
     1e-8,    # 収束領域の中心（最適候補）
     3e-8,
     1e-7     # 不安定領域の入口（限界確認）
@@ -137,26 +138,25 @@ def scan_dt(method):
 # ===========================================
 # log–log プロット
 # ===========================================
-def plot_results(dt_euler, dE_euler, dt_rk4, dE_rk4):
+def plot_results(dt_euler, delta_euler, dt_rk4, delta_rk4):
 
     os.makedirs("./figs", exist_ok=True)
     save_path = "./figs/dt_accuracy_preserved_large_dt.png"
 
     plt.figure(figsize=(8, 6))
 
-    plt.loglog(dt_euler, dE_euler, "o-", label="Euler")
-    plt.loglog(dt_rk4, dE_rk4, "s-", label="RK4")
+    plt.loglog(dt_euler, delta_euler, "o-", label="Euler")
+    plt.loglog(dt_rk4, delta_rk4, "s-", label="RK4")
 
     plt.xlabel("time step dt")
-    plt.ylabel("absolute energy error dE")
+    plt.ylabel("relative energy error δE")
+
     plt.grid(True, which="both")
     plt.legend()
     plt.tight_layout()
     plt.savefig(save_path, dpi=200)
     plt.show()
-
     print("Saved:", save_path)
-
 
 # ===========================================
 # Main
@@ -166,4 +166,4 @@ if __name__ == "__main__":
     dt_euler, delta_euler, dE_euler = scan_dt("euler")
     dt_rk4, delta_rk4, dE_rk4 = scan_dt("rk4")
 
-    plot_results(dt_euler, dE_euler, dt_rk4, dE_rk4)
+    plot_results(dt_euler, delta_euler, dt_rk4, delta_rk4)
