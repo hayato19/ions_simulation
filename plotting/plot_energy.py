@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 
-def plot_energy(t, e, save_dir="./figs"):
+def plot_energy(t, e, e0, save_dir="./figs"):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_name = f"energy_vs_time_{timestamp}.png"
     save_path = os.path.join(save_dir, save_name)
@@ -12,7 +12,7 @@ def plot_energy(t, e, save_dir="./figs"):
     os.makedirs(save_dir, exist_ok=True)
 
     plt.figure(figsize=(10, 6))
-    plt.plot(t, e, linewidth=1.2)
+    plt.plot(t, e / e0, linewidth=1.2)
 
     plt.xlabel("time [s]")
     plt.ylabel("total energy [J]")

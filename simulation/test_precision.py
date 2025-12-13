@@ -3,11 +3,6 @@ from simulation.solver_euler import euler_step_multi
 from simulation.solver_rk4 import rk4_step_multi
 
 def run_test(dt, method="euler", N=2000, w=1):
-    """
-    dt を指定して１回のシミュレーションを実行し、
-    総エネルギー誤差 δE を返す。
-    保存系テストのため、冷却・加熱は OFF にする。
-    """
 
     M = 1  # 単一粒子で十分（解析が簡単）
 
