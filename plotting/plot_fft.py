@@ -57,7 +57,7 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
             color="black",
             linestyle="-",
             linewidth=1.0,
-            alpha=0.7
+            alpha=0.2
         )
 
     plt.xlabel("frequency [Hz]")
@@ -82,12 +82,12 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
     # print("Saved histogram:", save_hist_path)
 
     # 上位5ピークの周波数値（全粒子合計）の中から大きい順に 5 つ表示
-    print("\n=== Global Top 5 Peak Frequencies ===")
-    peak_freq_global = np.array(peak_freq_global)
-    idx_top5_global = np.argsort(peak_freq_global)[-5:]   # 大きい順TOP5
-    top5_values = np.sort(peak_freq_global[idx_top5_global])
-
-    for i, f in enumerate(top5_values[::-1], start=1):
-        print(f"Top {i}: {f:.6e} Hz")
+    # print("\n=== Global Top 5 Peak Frequencies ===")
+    # peak_freq_global = np.array(peak_freq_global)
+    # idx_top5_global = np.argsort(peak_freq_global)[-5:]   # 大きい順TOP5
+    # top5_values = np.sort(peak_freq_global[idx_top5_global])
+    #
+    # for i, f in enumerate(top5_values[::-1], start=1):
+    #     print(f"Top {i}: {f:.6e} Hz")
 
     return peak_freq_global

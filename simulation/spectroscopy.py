@@ -9,7 +9,7 @@ def calculate_rho_sp(M, v):
     s_sp = 1.0
     omega_0 = 2 * math.pi * c / ramda
 
-    omega_sp = np.linspace(omega_0 - 3 * gamma, omega_0 + 3 * gamma, 11)
+    omega_sp = np.linspace(omega_0 - 3 * gamma, omega_0 + 3 * gamma, 31)
 
     delta_sp = omega_sp - omega_0
     k_sp = omega_sp / c
