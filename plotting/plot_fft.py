@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import math
 from datetime import datetime
 
 def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
@@ -47,6 +48,17 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
     plt.xlim(0, 6e6)
     if max_amp > 0:
         plt.ylim(0, max_amp * 1.2)
+
+    # 任意のfに直線を描画
+    f_lines = [1, math.sqrt(3), math.sqrt(5.818), math.sqrt(9.332), math.sqrt(13.47)]  # 仮の周波数 [Hz]
+    for f_line in f_lines:
+        plt.axvline(
+            f_line * 1e6,
+            color="black",
+            linestyle="-",
+            linewidth=1.0,
+            alpha=0.7
+        )
 
     plt.xlabel("frequency [Hz]")
     plt.ylabel("amplitude")
