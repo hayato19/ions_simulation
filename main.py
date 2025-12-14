@@ -8,6 +8,8 @@ from plotting.plot_x_range import plot_x_range
 from plotting.plot_full import plot_full_x, plot_full_f, plot_full_rho
 from plotting.plot_fft import plot_fft_all_particles
 from plotting.plot_energy import plot_energy
+from simulation.spectroscopy import calculate_rho_sp
+from plotting.plot_spectroscopy import plot_spectroscopy
 
 
 # ======================================
@@ -70,7 +72,7 @@ def main():
     # plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
     # 可視化(全粒子位置、全時間範囲)
-    plot_full_x(t, xM, save_dir="./figs")
+    # plot_full_x(t, xM, save_dir="./figs")
 
     # 可視化(全粒子の受ける力、全時間範囲)
     # plot_full_f(t, xM, save_dir="./figs")
@@ -83,6 +85,10 @@ def main():
 
     # 可視化(総エネルギー、全範囲)
     # plot_energy(t, e, save_dir="./figs")
+
+    # 分光信号のシミュレーション
+    omega_sp, rho_int, omega_0 = calculate_rho_sp(M, vM)
+    plot_spectroscopy(omega_sp, rho_int, omega_0,"each")
 
 if __name__ == "__main__":
     main()
