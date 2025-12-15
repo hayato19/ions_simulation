@@ -18,6 +18,10 @@ eps   = 1e-7          # 発散防止のための微小数
 ht  = 1000      # heating 判定間隔
 ips = 0         # scattering param
 
+# ---- operation parameters ----
+ct = 1
+st = 1
+
 # --- physical constants ---
 hbar = Decimal("1.054e-34")     # ディラック定数
 NA   = Decimal("6.02214076e23") # アボガドロ定数

@@ -37,6 +37,7 @@ def main():
     x0s = np.linspace(-12e-6, 12e-6, M)
     v0s = 0.0
     posit = [1, 1, 1, 1, 1]  # 1 : Be+
+    mode = 0    # mode = 0:冷却、加熱なし、1:加熱なし、2:冷却加熱あり
 
     start_time = time.time()
 
@@ -52,7 +53,7 @@ def main():
         xM, vM, f, heating_log, r, e = euler_step_multi(
             m_arr, k_arr, xM, vM, f, dt, N, w,
             alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
-            ips, ht
+            ips, ht, mode
         )
         print("Heating executed:", len(heating_log))
 
@@ -61,7 +62,7 @@ def main():
         xM, vM, f, heating_log, r, e = rk4_step_multi(
             m_arr, k_arr, xM, vM, f, dt, N, w,
             alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
-            ips, ht
+            ips, ht, mode
         )
 
     end_time = time.time()
