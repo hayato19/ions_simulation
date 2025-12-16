@@ -1,8 +1,9 @@
 import numpy as np
 from simulation.forces import cooling_step, heating_step, calculate_rho
+from simulation.params import cool_time, spec_time
 
 
-def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
+def rk4_step_multi_sp(m, k, x, v, f, dt, N, w, alpha, eps,
                    S0, kl, gamma, delta, ips, ht, mode):
 
     M = x.shape[1]
@@ -37,7 +38,20 @@ def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
     # Time evolution
     # --------------------------------------
     total_steps = N * w
+    mode_t = 0.0
     for step in range(1, total_steps + 1):
+        # 冷却、分光制御切替
+        if mode == 2:
+            if mode_t > cool_time:
+                mode = 3
+                mode_t = 0
+                # print(f"cooling mode changed at {dt * step:.8f}s\n")
+        else:
+            if mode_t > spec_time:
+                mode = 2
+                mode_t = 0
+                # print(f"spec mode changed at {dt * step:.8f}s\n")
+        mode_t += dt
 
         # k1
         a1, f1 = calc_accel(x_now, v_now)

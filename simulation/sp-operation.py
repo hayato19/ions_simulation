@@ -22,7 +22,7 @@ USE_SOLVER = "rk4"
 if USE_SOLVER == "euler":
     from simulation.solver_euler import euler_step_multi
 elif USE_SOLVER == "rk4":
-    from simulation.solver_rk4 import rk4_step_multi
+    from simulation.solver_rk4_operation import rk4_step_multi_sp
 else:
     raise ValueError("USE_SOLVER must be 'euler' or 'rk4'")
 
@@ -37,7 +37,7 @@ def main():
     x0s = np.linspace(-12e-6, 12e-6, M)
     v0s = 0.0
     posit = [1, 1, 1, 1, 1]  # 1 : Be+
-    mode = 2    # mode = 0:冷却、加熱なし、1:加熱なし、2:冷却加熱あり,3:冷却なし加熱あり
+    mode = 2    # mode = 0:冷却、加熱なし、1:加熱なし、2:冷却加熱あり
 
     start_time = time.time()
 
@@ -59,7 +59,7 @@ def main():
 
     elif USE_SOLVER == "rk4":
         print("=== Solver: RK4法 ===")
-        xM, vM, f, heating_log, r, e = rk4_step_multi(
+        xM, vM, f, heating_log, r, e = rk4_step_multi_sp(
             m_arr, k_arr, xM, vM, f, dt, N, w,
             alpha, eps, S0_arr, kl_arr, gamma_arr, delta_arr,
             ips, ht, mode
