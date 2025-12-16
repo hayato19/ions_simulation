@@ -1,0 +1,113 @@
+import numpy as np
+from simulation.forces import cooling_step, heating_step, calculate_rho
+from simulation.params import cool_time, spec_time
+
+
+def rk4_step_multi_sp(m, k, x, v, f, dt, N, w, alpha, eps,
+                   S0, kl, gamma, delta, ips, ht, mode):
+
+    M = x.shape[1]
+    x_now = x[0, :].copy()
+    v_now = v[0, :].copy()
+    f_now = np.zeros(M)
+    r = np.zeros_like(x)
+    e = np.zeros(N + 1)
+    e[0] = np.sum(0.5 * m * v_now ** 2 + 0.5 * k * x_now ** 2)
+
+    record_index = 1
+    heating_log = []
+
+    # --------------------------------------
+    # Acceleration function for RK4
+    # --------------------------------------
+    def calc_accel(xn, vn):
+        a = -(k/m) * xn
+        dx = xn[np.newaxis, :] - xn[:, np.newaxis]
+        np.fill_diagonal(dx, 0.0)
+        r3 = np.abs(dx)**3 + eps**3
+        a_int = -(alpha/m)*np.sum(dx/r3, axis=1)
+        a += a_int
+
+        f_tmp = np.zeros(M)
+        for i in range(M):
+            f_tmp[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i], mode)
+        a += f_tmp / m
+        return a, f_tmp
+
+    # --------------------------------------
+    # Time evolution
+    # --------------------------------------
+    total_steps = N * w
+    mode_t = 0.0
+    for step in range(1, total_steps + 1):
+        # 冷却、分光制御切替
+        if mode == 2:
+            if mode_t > cool_time:
+                mode = 3
+                mode_t = 0
+                # print(f"cooling mode changed at {dt * step:.8f}s\n")
+        else:
+            if mode_t > spec_time:
+                mode = 2
+                mode_t = 0
+                # print(f"spec mode changed at {dt * step:.8f}s\n")
+        mode_t += dt
+
+        # k1
+        a1, f1 = calc_accel(x_now, v_now)
+        k1x = v_now
+        k1v = a1
+
+        # k2
+        x2 = x_now + 0.5 * dt * k1x
+        v2 = v_now + 0.5 * dt * k1v
+        a2, _ = calc_accel(x2, v2)
+        k2x = v2
+        k2v = a2
+
+        # k3
+        x3 = x_now + 0.5 * dt * k2x
+        v3 = v_now + 0.5 * dt * k2v
+        a3, _ = calc_accel(x3, v3)
+        k3x = v3
+        k3v = a3
+
+        # k4
+        x4 = x_now + dt * k3x
+        v4 = v_now + dt * k3v
+        a4, f4 = calc_accel(x4, v4)
+        k4x = v4
+        k4v = a4
+
+        # RK4 update
+        x_now = x_now + (dt/6.0)*(k1x + 2*k2x + 2*k3x + k4x)
+        v_now = v_now + (dt/6.0)*(k1v + 2*k2v + 2*k3v + k4v)
+
+        f_now = f4.copy()
+
+        # -------------------------
+        # Heating
+        # -------------------------
+        if step % ht == 0:
+            for i in range(M):
+                dv = heating_step(
+                    v_now[i], S0[i], kl[i], gamma[i], delta[i],
+                    m[i], ips, ht, dt, mode
+                )
+                v_now[i] += dv
+                heating_log.append((step, i, float(dv)))
+
+        # -------------------------
+        # Recording
+        # -------------------------
+        if step % w == 0:
+            x[record_index, :] = x_now
+            v[record_index, :] = v_now
+            f[record_index, :] = f_now
+            r[record_index, :] = calculate_rho(v_now[:], S0[:], kl[:], gamma[:], delta[:])
+            e[record_index] = np.sum(
+                0.5 * m * v_now ** 2 + 0.5 * k * x_now ** 2
+            )
+            record_index += 1
+
+    return x, v, f, heating_log, r, e
