@@ -2,7 +2,7 @@ import numpy as np
 from simulation.forces import cooling_step, heating_step, calculate_rho
 
 def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
-                     S0, kl, gamma, delta, ips, ht):
+                     S0, kl, gamma, delta, ips, ht, mode):
 
     M = x.shape[1]
     x_now = x[0, :].copy()
@@ -26,7 +26,7 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
         a += a_int
 
         for i in range(M):
-            f_now[i] = cooling_step(v_now[i], S0[i], kl[i], gamma[i], delta[i])
+            f_now[i] = cooling_step(v_now[i], S0[i], kl[i], gamma[i], delta[i], mode)
         a += f_now / m
 
         v_now = v_now + dt*a
@@ -35,7 +35,7 @@ def euler_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
         if step % ht == 0:
             for i in range(M):
                 dv = heating_step(v_now[i], S0[i], kl[i], gamma[i], delta[i],
-                                  m[i], ips, ht, dt)
+                                  m[i], ips, ht, dt, mode)
                 v_now[i] += dv
                 heating_log.append((step, i, float(dv)))
 

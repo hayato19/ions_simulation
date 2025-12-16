@@ -97,12 +97,12 @@ def run_once(dt, method):
     if method == "euler":
         xM, vM, fM, heating_log, rM, E = euler_step_multi(
             m_arr, k_arr, x, v, f, dt, N_eff, w_eff,
-            alpha, eps, S0, kl, gamma, delta, ips, ht
+            alpha, eps, S0, kl, gamma, delta, ips, ht, 0
         )
     else:
         xM, vM, fM, heating_log, rM, E = rk4_step_multi(
             m_arr, k_arr, x, v, f, dt, N_eff, w_eff,
-            alpha, eps, S0, kl, gamma, delta, ips, ht
+            alpha, eps, S0, kl, gamma, delta, ips, ht, 0
         )
 
     return E, E0

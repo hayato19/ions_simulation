@@ -8,7 +8,7 @@ def calculate_rho(v, S0, kl, gamma, delta):##ρeeの計算
 
 def cooling_step(v, S0, kl, gamma, delta, mode):##放射圧冷却力の計算
     rho = calculate_rho(v, S0, kl, gamma, delta)
-    if mode == 0:
+    if mode == 0 or mode == 3:
         return 0
     return float(hbar) * gamma * rho * kl
 

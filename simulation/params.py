@@ -7,7 +7,7 @@ getcontext().prec = 50  # 計算精度
 
 # --- params ---
 dt = 3e-9        # 時間刻み（0.05ns）
-N  = 500 * 3         # 記録数
+N  = 500 * 3 * 10    # 記録数
 w  = 50 // 3         # 記録間隔（w ステップに 1 回記録）
                      # ステップ数　= N * w
 
@@ -19,8 +19,9 @@ ht  = 1000      # heating 判定間隔
 ips = 0         # scattering param
 
 # ---- operation parameters ----
-ct = 1
-st = 1
+cool_time = 50e-6
+spec_time = 1e-6
+cycle_time = cool_time + spec_time
 
 # --- physical constants ---
 hbar = Decimal("1.054e-34")     # ディラック定数
