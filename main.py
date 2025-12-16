@@ -37,7 +37,7 @@ def main():
     x0s = np.linspace(-12e-6, 12e-6, M)
     v0s = 0.0
     posit = [1, 1, 1, 1, 1]  # 1 : Be+
-    mode = 0    # mode = 0:冷却、加熱なし、1:加熱なし、2:冷却加熱あり
+    mode = 2    # mode = 0:冷却、加熱なし、1:加熱なし、2:冷却加熱あり,3:冷却なし加熱あり
 
     start_time = time.time()
 
@@ -73,7 +73,7 @@ def main():
     # plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
     # 可視化(全粒子位置、全時間範囲)
-    # plot_full_x(t, xM, save_dir="./figs")
+    plot_full_x(t, xM, save_dir="./figs")
 
     # 可視化(全粒子の受ける力、全時間範囲)
     # plot_full_f(t, xM, save_dir="./figs")
