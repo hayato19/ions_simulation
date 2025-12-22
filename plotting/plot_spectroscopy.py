@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 def plot_spectroscopy(omega_sp, rho_int, omega_0, mode="sum"):
 
@@ -28,6 +29,21 @@ def plot_spectroscopy(omega_sp, rho_int, omega_0, mode="sum"):
         linewidth=1,
         label=r"$\omega = \omega_0$"
     )
+    plt.axvline(
+        omega_0 - 2 * math.pi * 10e6,
+        color="red",
+        linestyle="-",
+        linewidth=1,
+        label=r"$\omega_0 - 1MHz$"
+    )
+    plt.axvline(
+        omega_0 + 2 * math.pi * 10e6,
+        color="red",
+        linestyle="-",
+        linewidth=1,
+        label=r"$\omega_0 + 1MHz$"
+    )
+    print(f"ω-width from {omega_sp[0]} to {omega_sp[-1]}")
 
     plt.xlabel(r"angular frequency $\omega$ [rad/s]")
     plt.ylabel(r"integrated $\rho_{\mathrm{sp}}$")
