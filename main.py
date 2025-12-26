@@ -73,7 +73,7 @@ def main():
     # plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
     # 可視化(全粒子位置、全時間範囲)
-    plot_full_x(t, xM, save_dir="./figs")
+    # plot_full_x(t, xM, save_dir="./figs")
 
     # 可視化(全粒子の受ける力、全時間範囲)
     # plot_full_f(t, xM, save_dir="./figs")
@@ -82,14 +82,14 @@ def main():
     # plot_full_rho(t, r, save_dir="./figs")
 
     # 可視化(全粒子のFFT、指定周波数範囲)
-    plot_fft_all_particles(t, xM, dt, save_dir="./figs")
+    # plot_fft_all_particles(t, xM, dt, save_dir="./figs")
 
     # 可視化(総エネルギー、全範囲)
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
-    omega_sp, rho_int, omega_0 = calculate_rho_sp(M, vM)
-    plot_spectroscopy(omega_sp, rho_int, omega_0,"each")
+    omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
+    plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
 
 if __name__ == "__main__":
     main()
