@@ -88,8 +88,8 @@ def main():
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
-    omega_sp, rho_int, omega_0 = calculate_rho_sp(M, vM)
-    plot_spectroscopy(omega_sp, rho_int, omega_0,"each")
+    omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
+    plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
 
 if __name__ == "__main__":
     main()
