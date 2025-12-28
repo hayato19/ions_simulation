@@ -10,6 +10,7 @@ from plotting.plot_fft import plot_fft_all_particles
 from plotting.plot_energy import plot_energy
 from simulation.spectroscopy import calculate_rho_sp
 from plotting.plot_spectroscopy import plot_spectroscopy
+from simulation.calculation_t import T_ratio_with_and_without_COM
 
 
 # ======================================
@@ -73,7 +74,7 @@ def main():
     # plot_x_range(t, xM, t_start=3e-5, t_end=t[-1], particle_index=2)
 
     # 可視化(全粒子位置、全時間範囲)
-    # plot_full_x(t, xM, save_dir="./figs")
+    plot_full_x(t, xM, save_dir="./figs")
 
     # 可視化(全粒子の受ける力、全時間範囲)
     # plot_full_f(t, xM, save_dir="./figs")
@@ -88,8 +89,18 @@ def main():
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
-    omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
-    plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
+    # omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
+    # plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
+
+    # 温度による冷却の評価
+    # res = T_ratio_with_and_without_COM(
+    #     v=vM,
+    #     m=m_arr[0],
+    #     Gamma=gamma_arr[0],  # [rad/s]
+    #     s0=S0_arr[0],  # dimensionless
+    # )
+    # for k, val in res.items():
+    #     print(f"{k:10s} = {val:.4e}")
 
 if __name__ == "__main__":
     main()
