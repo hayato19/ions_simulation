@@ -89,15 +89,17 @@ def main():
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
-    # omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
-    # plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
+    omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
+    plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
 
     # 温度による冷却の評価
+    # steps = slice(int(0.9 * vM.shape[0]), None)
     # res = T_ratio_with_and_without_COM(
     #     v=vM,
     #     m=m_arr[0],
     #     Gamma=gamma_arr[0],  # [rad/s]
     #     s0=S0_arr[0],  # dimensionless
+    #     steps=steps,
     # )
     # for k, val in res.items():
     #     print(f"{k:10s} = {val:.4e}")

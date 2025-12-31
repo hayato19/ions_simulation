@@ -6,8 +6,8 @@ from decimal import Decimal, getcontext
 getcontext().prec = 50  # 計算精度
 
 # --- params ---
-dt = 3e-9        # 時間刻み（0.05ns）
-N  = 500 * 3 * 10    # 記録数
+dt = 1e-9        # 時間刻み（0.05ns）
+N  = 500 * 3 * 10*2*3    # 記録数
 w  = 50 // 3         # 記録間隔（w ステップに 1 回記録）
                      # ステップ数　= N * w
 
