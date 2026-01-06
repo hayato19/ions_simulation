@@ -15,7 +15,7 @@ def calculate_rho_sp(M, v):
 
     # 掃引範囲：最大側帯 + 余裕（±5 MHz 推奨）
     span_hz = 5e6
-    omega_sp = np.linspace(omega_0 - 2*math.pi*span_hz, omega_0 + 2*math.pi*span_hz, 300)
+    omega_sp = np.linspace(omega_0 - 2*math.pi*span_hz, omega_0 + 2*math.pi*span_hz, 1000)
 
     delta_sp = omega_sp - omega_0
     k_sp = omega_sp / c
@@ -35,7 +35,7 @@ def calculate_rho_sp(M, v):
             sum_rho += rho_sp * dt_rec
 
         rho_int[i, :] = sum_rho
-        if i % 500 == 0:
+        if i % 50 == 0:
             print(f"calc {i}/{len(omega_sp)}")
 
     return omega_sp, rho_int, omega_0, f_modes
