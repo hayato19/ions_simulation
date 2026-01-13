@@ -15,7 +15,7 @@ def calculate_rho_sp(M, v):
 
     # 掃引範囲：最大側帯 + 余裕（±5 MHz 推奨）
     span_hz = 5e6
-    omega_sp = np.linspace(omega_0 - 2*math.pi*span_hz, omega_0 + 2*math.pi*span_hz, 1000)
+    omega_sp = np.linspace(omega_0 - 5e7, omega_0 + 5e7, 300)
 
     delta_sp = omega_sp - omega_0
     k_sp = omega_sp / c
