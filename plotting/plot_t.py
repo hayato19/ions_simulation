@@ -4,19 +4,28 @@ import os
 from datetime import datetime
 plt.rcParams["font.size"] = 15
 
-def plot_energy(t, e, e0, save_dir="./figs"):
+def plot_t(t, T, T_min, M, n_sum, mag, save_dir="./figs"):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_name = f"energy_vs_time_{timestamp}.png"
     save_path = os.path.join(save_dir, save_name)
 
     os.makedirs(save_dir, exist_ok=True)
 
+    t = t[:n_sum]
+
+    n = len(T) // mag
+    T = T[:n]
+    t = t[:n]
+
     plt.figure(figsize=(10, 6))
-    plt.plot(t, e / e0, linewidth=1.2)
+    for j in range(M):
+        plt.plot(t, T[:, j], label=f"temperature {j}")
+
+    plt.axhline(T_min, color="black", linestyle="-", linewidth=1, label=r"$\T_min$")
 
     plt.xlabel("time [s]")
-    plt.ylabel("total energy [J]")
-    plt.title("Total Energy vs Time")
+    plt.ylabel("temperature [K]")
+    plt.title("Temperature vs Time")
     plt.grid(True)
     plt.tight_layout()
 

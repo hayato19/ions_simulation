@@ -1,4 +1,5 @@
 import numpy as np
+from simulation.params import dt, w, N
 
 # ---- physical constants ----
 kB   = 1.380649e-23        # J/K
@@ -9,62 +10,35 @@ def T_ratio_with_and_without_COM(
     m: float,
     Gamma,
     s0,
-    steps=None,
     j=2/5,
 ):
     Gamma = float(Gamma)
     s0 = float(s0)
     j = float(j)
     m = float(m)
-    """
-    Compute T_th / T_min for 1D classical multi-particle trajectories (kinetic only).
 
-    Parameters
-    ----------
-    v : ndarray, shape (N_steps, M)
-        velocities [m/s]
-    m : float
-        particle mass [kg]
-    Gamma : float
-        natural linewidth (angular) [rad/s]
-    s0 : float
-        saturation parameter (dimensionless), s = s0
-    steps : None, slice, or 1D index array
-        time indices to evaluate (None -> all)
-    j : float
-        geometry factor (default 2/5 for dipole radiation)
-    remove_com : bool
-        subtract COM velocity at each step (recommended)
+    M = 5
 
-    Returns
-    -------
-    ratio : float
-        T_th / T_min
-    T_th : float
-        thermal temperature [K]
-    T_min : float
-        Doppler minimum temperature [K]
-    """
-    # --- select steps ---
-    vv = v[steps] if steps is not None else v
+    trap_f = 1e6
+    w = 50 // 3
+    n_cycle = 1000 // w  #約1サイクル(互換性なし)
+    n_sum = N // n_cycle  #総ステップ≒n_cycle * n_sum
 
-    # ---- raw ----
-    v2_raw = np.mean(vv ** 2)
-    T_raw = (m / kB) * v2_raw
+    v2 = np.zeros_like(v)
+    v2 = v2[:n_sum]
+    T = np.zeros_like(v)
+    T = T[:n_sum]
 
-    # ---- COM removed ----
-    v_cm = vv.mean(axis=1, keepdims=True)
-    dv = vv - v_cm
-    v2_th = np.mean(dv ** 2)
-    T_th = (m / kB) * v2_th
 
-    # ---- Doppler limit ----
+    for i in range(n_sum-1):
+        for j in range(n_cycle-1):
+            step = n_cycle * i + j
+            v2[i][:] += v[step][:] ** 2
+        T[:][:] = m / kB * v2[:][:]
+
+    # T = np.zeros_like(v)
+    # T[:][:] = m / kB * v[:][:] ** 2
+
     T_min = (hbar * Gamma * np.sqrt(1.0 + s0) / (4.0 * kB)) * (1.0 + j)
 
-    return {
-        "T_raw": T_raw,
-        "T_th": T_th,
-        "T_min": T_min,
-        "ratio_raw": T_raw / T_min,
-        "ratio_th": T_th / T_min,
-    }
+    return T, T_min, n_sum

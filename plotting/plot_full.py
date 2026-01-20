@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+plt.rcParams["font.size"] = 15
 
 def plot_full_x(t, xM, save_dir="./figs"):
     """
@@ -14,8 +15,13 @@ def plot_full_x(t, xM, save_dir="./figs"):
 
     os.makedirs(save_dir, exist_ok=True)
 
-    plt.figure(figsize=(20, 6))
+    plt.figure(figsize=(12, 6))
     M = xM.shape[1]
+
+    mag = 6
+    n = len(xM) // mag
+    xM = xM[:n]
+    t = t[:n]
 
     for j in range(M):
         plt.plot(t, xM[:, j], label=f"particle {j}")

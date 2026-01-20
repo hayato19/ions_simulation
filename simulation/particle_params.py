@@ -29,8 +29,8 @@ def set_particle_params(M, posit):
         if posit[i] == 1:
             M_mol = Decimal("9e-3")  # 9 mg/mol
             m_arr[i] = float(M_mol / NA)
-
-            k_arr[i]     = (two_pi * 1e6)**2 * m_arr[i]
+            trap_f = 1e6
+            k_arr[i]     = (two_pi * trap_f)**2 * m_arr[i]
             kl_arr[i]    = two_pi / 313e-9
             gamma_arr[i] = 20.0e6 * two_pi
             S0_arr[i]    = 10
