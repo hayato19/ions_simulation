@@ -5,7 +5,7 @@ from simulation.params import dt, N, w
 def calculate_rho_sp(M, v):
     c = 299_792_458.0
     ramda = 313e-9
-    gamma = 100e3 * 2 * math.pi   # 100 kHz (rad/s)
+    gamma = 20e6 * 2 * math.pi   # 100 kHz (rad/s)
     s_sp = 1.0
     omega_0 = 2 * math.pi * c / ramda
 
@@ -14,8 +14,8 @@ def calculate_rho_sp(M, v):
     f_max = np.max(f_modes)
 
     # 掃引範囲：最大側帯 + 余裕（±5 MHz 推奨）
-    span_hz = 5e6
-    omega_sp = np.linspace(omega_0 - 5e7, omega_0 + 5e7, 300)
+    scale = 1e9
+    omega_sp = np.linspace(omega_0 - scale, omega_0 + scale, 300)
 
     delta_sp = omega_sp - omega_0
     k_sp = omega_sp / c

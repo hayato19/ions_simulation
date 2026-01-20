@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+plt.rcParams["font.size"] = 15
 
 def plot_x_range(t, xM, t_start, t_end, particle_index, save_dir="./figs"):
     """

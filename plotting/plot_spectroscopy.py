@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+plt.rcParams["font.size"] = 15
 
 def plot_spectroscopy(omega_sp, rho_int, omega_0, f_modes_hz, mode="sum"):
 
@@ -22,7 +23,7 @@ def plot_spectroscopy(omega_sp, rho_int, omega_0, f_modes_hz, mode="sum"):
         raise ValueError("mode must be 'sum', 'mean', or 'each'")
 
     # ω0
-    plt.axvline(0, color="black", linestyle="--", linewidth=1, label=r"$\omega_0$")
+    # plt.axvline(0, color="black", linestyle="--", linewidth=1, label=r"$\omega_0$")
 
     # サイドバンド候補：ω0 ± 2π f_n
     # for f in f_modes_hz:
