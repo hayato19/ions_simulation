@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+plt.rcParams["font.size"] = 15
 
 def plot_precision(dt_list, err_euler, err_rk4, save_dir="./figs"):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
