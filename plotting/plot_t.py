@@ -23,6 +23,8 @@ def plot_t(t, T, T_min, M, n_sum, mag, save_dir="./figs"):
 
     plt.axhline(T_min, color="black", linestyle="-", linewidth=1, label=r"$\T_min$")
 
+    plt.yscale("log")
+
     plt.xlabel("time [s]")
     plt.ylabel("temperature [K]")
     plt.title("Temperature vs Time")

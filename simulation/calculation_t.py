@@ -31,14 +31,16 @@ def T_ratio_with_and_without_COM(
 
 
     for i in range(n_sum-1):
-        for j in range(n_cycle-1):
-            step = n_cycle * i + j
+        for l in range(n_cycle-1):
+            step = n_cycle * i + l
             v2[i][:] += v[step][:] ** 2
-        T[:][:] = m / kB * v2[:][:]
+            v2[i][:] = v2[i][:]
+        T[:][:] = m / kB * v2[:][:] / n_cycle
 
     # T = np.zeros_like(v)
     # T[:][:] = m / kB * v[:][:] ** 2
 
     T_min = (hbar * Gamma * np.sqrt(1.0 + s0) / (4.0 * kB)) * (1.0 + j)
+    print(n_cycle)
 
     return T, T_min, n_sum
