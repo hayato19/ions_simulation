@@ -1,3 +1,5 @@
+# ρの計算、冷却、加熱計算ステップ
+
 import numpy as np
 import random
 import math

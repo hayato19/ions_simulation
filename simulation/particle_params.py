@@ -1,4 +1,4 @@
-# simulation/particle_params.py
+# 粒子種類ごとのパラメータ指定
 
 import math
 import numpy as np

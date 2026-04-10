@@ -1,3 +1,4 @@
+# 計算処理用配列の準備(粒子数M×計算ステップ(N×w)×ステップ時間幅dt)
 import numpy as np
 
 def initialize_arrays_multi(M, N, w, dt, x0s, v0s=0.0):##粒子の位置、速度の初期化
