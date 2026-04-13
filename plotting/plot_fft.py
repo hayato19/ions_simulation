@@ -79,6 +79,8 @@ def plot_fft_all_particles(t, xM, dt, save_dir="./figs"):
 
     print("Saved:", save_full)
 
+    return f_lines
+
 
     # ===============================
     # ② ピーク周辺の拡大図
