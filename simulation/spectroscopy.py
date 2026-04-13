@@ -38,4 +38,4 @@ def calculate_rho_sp(M, v):
         if i % 50 == 0:
             print(f"calc {i}/{len(omega_sp)}")
 
-    return omega_sp, rho_int, omega_0, f_modes
+    return omega_sp, rho_int, omega_0, f_modes, c, ramda, gamma, s_sp

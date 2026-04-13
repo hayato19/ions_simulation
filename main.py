@@ -1,7 +1,7 @@
 import time
 import numpy as np
 
-from simulation.params import dt, N, w, alpha, eps, ips, ht
+from simulation.params import dt, N, w, alpha, eps, ips, ht, hbar
 from simulation.initialize import initialize_arrays_multi
 from simulation.particle_params import set_particle_params
 from plotting.plot_x_range import plot_x_range
@@ -10,7 +10,7 @@ from plotting.plot_fft import plot_fft_all_particles
 from plotting.plot_energy import plot_energy
 from simulation.spectroscopy import calculate_rho_sp
 from plotting.plot_spectroscopy import plot_spectroscopy
-from simulation.calculation_t import T_ratio_with_and_without_COM
+from simulation.calculation_t import T_ratio_with_and_without_COM, kB
 from plotting.plot_t import plot_t
 
 
@@ -84,13 +84,13 @@ def main():
     # plot_full_rho(t, r, save_dir="./figs")
 
     # 可視化(全粒子のFFT、指定周波数範囲)
-    plot_fft_all_particles(t, xM, dt, save_dir="./figs")
+    f_lines = plot_fft_all_particles(t, xM, dt, save_dir="./figs")
 
     # 可視化(総エネルギー、全範囲)
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
-    omega_sp, rho_int, omega_0, f_mods = calculate_rho_sp(M, vM)
+    omega_sp, rho_int, omega_0, f_mods, c, lamb, gammad, s_sp = calculate_rho_sp(M, vM)
     plot_spectroscopy(omega_sp, rho_int, omega_0, f_mods,"each")
 
     # 温度による冷却の評価
@@ -101,6 +101,29 @@ def main():
     #     s0=S0_arr[0],  # dimensionless
     # )
     # plot_t(t, T, T_min, M, n_sum, 2)
+    with open("tex/sections/params.tex","w",encoding="utf-8") as f:
+        f.write(rf"\newcommand{{\Mval}}{{{M}}}" + "\n")
+        f.write(rf"\newcommand{{\dtval}}{{{dt}}}" + "\n")
+        f.write(rf"\newcommand{{\hbarval}}{{{hbar}}}" + "\n")
+        f.write(rf"\newcommand{{\kval}}{{{k_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\kBval}}{{{kB}}}" + "\n")
+        f.write(rf"\newcommand{{\klval}}{{{kl_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\mval}}{{{m_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\Sval}}{{{S0_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\alphaval}}{{{alpha}}}" + "\n")
+        f.write(rf"\newcommand{{\gammaval}}{{{gamma_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\htval}}{{{ht}}}" + "\n")
+        f.write(rf"\newcommand{{\deltaval}}{{{delta_arr[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\cval}}{{{c}}}" + "\n")
+        f.write(rf"\newcommand{{\laval}}{{{lamb}}}" + "\n")
+        f.write(rf"\newcommand{{\gammadval}}{{{gammad}}}" + "\n")
+        f.write(rf"\newcommand{{\Sspval}}{{{s_sp}}}" + "\n")
+        f.write(rf"\newcommand{{\omegaZeroval}}{{{omega_0}}}" + "\n")
+        f.write(rf"\newcommand{{\fvala}}{{{f_lines[0]}}}" + "\n")
+        f.write(rf"\newcommand{{\fvalb}}{{{f_lines[1]}}}" + "\n")
+        f.write(rf"\newcommand{{\fvalc}}{{{f_lines[2]}}}" + "\n")
+        f.write(rf"\newcommand{{\fvald}}{{{f_lines[3]}}}" + "\n")
+        f.write(rf"\newcommand{{\fvale}}{{{f_lines[4]}}}" + "\n")
 
 if __name__ == "__main__":
     main()
