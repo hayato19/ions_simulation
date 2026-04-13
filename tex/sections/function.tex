@@ -1,0 +1,113 @@
+\usepackage{amsopn}
+\usepackage{amstext}
+\section{諸数式}
+\section{粒子の状態の記述}
+ 一次元中に複数の粒子が存在する系を考える。
+粒子数をMとし、m番目の粒子の時間tでの位置と速度を$x_{t,m}$, $v_{t,m}$とする。
+またtは微小時間dt,ステップ間時間幅wとして$t=dt\times{w}\times{n}$ (nは正の整数)とできる。
+記録回数をNとすると、$0\leq{n}\leq{N},0\leq{t}\leq{dt\times{w}\times{N}}$の範囲を計算することができる。
+実装上、x,vは$M\times{N}$行列で表し、m番目の粒子の時間tでの位置は$x[m][\frac{t}{dt\times{w}}]$の値に格納される。
+このx,vの時間発展を古典の運動方程式に従い近似積分処理(４次ルンゲクッタ法)で計算することで各粒子の運動を記述する。
+
+\section{ポテンシャル束縛}
+イオンを任意の領域にとどめるために、調和振動子ポテンシャルをかける。
+ポテンシャル中心を原点と取ることで、各粒子に以下の力$F_1$が加わるといえる。
+\begin{equation}
+    F_{1m} = -k_mx_m
+\end{equation}
+ここでk_mはトラップ周波数$f_{trap}$,粒子質量$m_m$に対して
+\begin{equation}
+    k_m = (2\pi f_{trap})^2 m_m
+\end{equation}
+とする。\\
+
+\section{ローレンツ反発}
+ イオン同士はクーロン相互作用によって力を及ぼしあう。同種のイオンを想定する場合、イオンは同じ電荷を持つため反発力が生まれる。\\
+各粒子に加わるクーロン相互作用の力は素の粒子を除く全ての粒子との相互作用による力の和であるから、次の$F_2$であるといえる。\\
+\begin{equation}
+    F_{2m} = \sum_{m=0}^M a_{mn} \frac{\alpha}{(x_m-x_n)^2}
+\end{equation}
+\begin{equation}
+    a_{mn} =
+    \begin{cases}
+        1 & \text{if } m < n \\
+        0 & \text{if } m = n \\
+        -1 & \text{if } m > n
+    \end{cases}
+\end{equation}
+ここで
+\begin{equation}
+    \alpha=\frac{q_m q_n}{4\pi \epsilon}
+\end{equation}
+特に真空中の一価のイオンの集合を考えた場合$\alpha=2.3\times10^-28N/m^2$である。
+
+\section{レーザー冷却}
+ ドップラー冷却による平均の力を考える。\\
+ 飽和パラメータ$S_0$, 冷却レーザー周波数$\gamma rad/s$, デチューニング$\delta rad/s$, レーザーの進行方向$\vec{k_l} rad/s$として、平均の力$<F_3>$は次のようにかける。
+\begin{equation}
+    <F_3> = \hbar\gamma\frac{\frac{S_0}{2}}{S_0+1+\frac{4}{\gamma}(\delta-\vec{k_l}\cdot\vec{v})^2}\cdot|\vec{k_l}|
+\end{equation}
+一次元中の系であるから内積は単に積で計算をした。
+
+\section{反跳加熱}
+ 原子は励起時に放出する光子から運動量キックを受ける。放出方向は規定できないため、ランダムな方法に運動量を受けるとすると、この運動量は次のように記述できる。
+\begin{equation}
+    p_{kick}=|p_{kick}|\cdot\cos\theta, (0\leq\theta\2\pi)
+\end{equation}
+励起が$\Delta t$sに一度起こるとすると、運動量の大きさは次のように記述できる。
+\begin{equation}
+    |p_{kick}|=\hbar k_l\sqrt{\gamma\frac{\frac{S_0}{2}}{S_0+1+\frac{4}{\gamma}(\delta-\vec{k_l}\cdot\vec{v})^2}(\Delta t)}
+\end{equation}
+よって、$\Delta t$秒ごとに以下の運動量キックを加えればいい。
+\begin{equation}
+    p_{kick}=\hbar k_l\sqrt{\gamma\frac{\frac{S_0}{2}}{S_0+1+\frac{4}{\gamma}(\delta-\vec{k_l}\cdot\vec{v})^2}(\Delta t)}\cdot\cos{\theta}
+\end{equation}
+
+\section{運動方程式と加熱計算}
+ 以上の力から、運動方程式は次のように記述できる。
+\begin{equation}
+    m_m\frac{d^2}{dt^2}x_n=F_1+F_2+<F_3>=-k_mx_m+\sum_{m=0}^M a_{mn} \frac{\alpha}{(x_m-x_n)^2}+\hbar\gamma\frac{\frac{S_0}{2}}{S_0+1+\frac{4}{\gamma}(\delta-\vec{k_l}\cdot\vec{v})^2}\cdot|\vec{k_l}|
+\end{equation}
+また、この運動方程式から計算した$\Delta t$秒における速度$v_{m,\Delta t,cal}$に対し、$\Delta t$秒ごとに加熱すると以下の式が成り立つ。
+\begin{equation}
+    v_{m,\Delta t,new}=v_{m\Delta t,cal}+\frac{\hbar k_l}{m_m}\sqrt{\gamma\frac{\frac{S_0}{2}}{S_0+1+\frac{4}{\gamma}(\delta-\vec{k_l}\cdot\vec{v})^2}(\Delta t)}\cdot\cos{\theta}
+\end{equation}
+この運動方程式及び加熱計算を微小時間ごとに規定回数計算することで各粒子の運動を計算する。
+
+\section{振動モードの分析}
+ 複数のイオンがトラップされている場合、調和振動子ポテンシャルとクーロン反発によって振動する。各粒子の位置の情報をフーリエ変換し、振動モードを求める。\\
+振動モードの固有振動数$\nu$は固有値$\mu$を用いて以下のように表すことができる。
+\begin{equation}
+    \nu_p = \sqrt{\mu_p}\nu_1
+\end{equation}
+シミュレーションから求めた振動モードの分布と理論から導いた固有振動数を比較する
+
+\section{冷却評価}
+ レーザー冷却がどの程度行われたかを計算する\\
+まず速度$v$から求められる運動温度Tを導入する。
+\begin{equation}
+    <T>=\frac{m}{k_B}<v^2>
+\end{equation}
+ドップラー冷却による冷却限界$T_{min}$は冷却レーザー周波数$\gamma$によって以下のように決まることが知られている。
+\begin{equation}
+    T_{min}=\frac{\hbar\gamma\sqrt{1+S_0}}{4k_B}\cdot\frac{7}{5}
+\end{equation}
+振動数サイクルあたりの平均運動温度と冷却限界温度を比較する。
+
+\section{分光信号の計算}
+ 分光信号のスペクトル図の特性を調べる。\\
+２準位系を考えると分光信号のスペクトルは励起確率に比例するため、以下の式で表すことができる。
+\begin{equation}
+    S_{\omega_{sp}}\propto\int_{0}^{T_{MAX}}\frac{\frac{S_{sp}}{2}}{1+\frac{4}{\gamma'^2} \lbrace(\omega_{sp}-\omega_{o})-\vec{k_{sp}}\cdot\vec{v_{(t)}}\rbrace^2}dt
+\end{equation}
+分光用レーザーによる運動への寄与が無いとすれば、先に示した運動方程式と加熱式を用いて計算した$v_{m,t}$を使ってSが計算できる。\\
+また、これはローレンツ関数であり、半値幅(FWHM)は
+\begin{equation}
+    FWHM=\sqrt{\gamma'^2+4(\vec{k_{sp}}\cdot<\vec{v_(t)}>)}
+\end{equation}
+と表すことができる。ここで$\gamma'^2\gg4(\vec{k_{sp}}\cdot<\vec{v_(t)}>)$とすると、
+\begin{equation}
+    FWHM\simeq\gamma'
+\end{equation}
+この時、スペクトル幅は自然幅であるという。一方、$\gamma'^2\gg4(\vec{k_{sp}}\cdot<\vec{v_(t)}>)$出ない場合、スペクトル幅は自然幅より大きく、ドップラー広がりを示す。
+異なる$\omega_{sp}$で複数回スペクトルを計算し、その特性を調べる。特にFWHMがどのような特性を示すか調べる。
