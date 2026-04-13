@@ -1,4 +1,4 @@
-# simulation/params.py
+# パラメータ格納
 
 import math
 from decimal import Decimal, getcontext
