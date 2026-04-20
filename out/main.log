@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.24.0 (MiKTeX 25.12) (format=lualatex 2026.4.11)  13 APR 2026 15:59
+This is LuaHBTeX, Version 1.24.0 (MiKTeX 25.12) (format=lualatex 2026.4.11)  20 APR 2026 15:01
  restricted system commands enabled.
  file:line:error style messages enabled.
 **main.tex
@@ -1340,45 +1340,19 @@ LaTeX Font Info:    Font shape `JY3/gt/m/n' will be
 (Font)              scaled to size 13.85594pt on input line 16.
 
 (./sections/function.tex
-
-./sections/function.tex:1: LaTeX Error: Can be used only in preamble.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.1 \usepackage
-               {amsopn}
-Your command was ignored.
-Type  I <command> <return>  to replace it with another command,
-or  <return>  to continue without it.
-
-
-./sections/function.tex:2: LaTeX Error: Can be used only in preamble.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.2 \usepackage
-               {amstext}
-Your command was ignored.
-Type  I <command> <return>  to replace it with another command,
-or  <return>  to continue without it.
-
-./sections/function.tex:18: Missing $ inserted.
+./sections/function.tex:15: Missing $ inserted.
 <inserted text> 
                 $
-l.18 ここでk_
+l.15 ここでk_
                 mはトラップ周波数$f_{trap}$,粒子質量$m_m$に対し..
 .
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
 
-./sections/function.tex:18: Missing $ inserted.
+./sections/function.tex:15: Missing $ inserted.
 <inserted text> 
                 $
-l.18 ここでk_mはトラップ周波数$f_
+l.15 ここでk_mはトラップ周波数$f_
                                             {trap}$,粒子質量$m_m$に対し..
 .
 I've inserted a begin-math/end-math symbol since I think
@@ -1389,13 +1363,13 @@ you left one out. Proceed, with fingers crossed.
 {C:/Users/ito hayato/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}](load cac
 he: extra_lmroman8-regular.luc)
 LaTeX Font Info:    Font shape `JT3/mc/m/n' will be
-(Font)              scaled to size 7.3754pt on input line 33.
+(Font)              scaled to size 7.3754pt on input line 30.
 (load cache: extra_lmroman5-regular.luc)
 LaTeX Font Info:    Font shape `JT3/mc/m/n' will be
-(Font)              scaled to size 5.26814pt on input line 33.
+(Font)              scaled to size 5.26814pt on input line 30.
 
-./sections/function.tex:55: Undefined control sequence.
-l.55 ...=|p_{kick}|\cdot\cos\theta, (0\leq\theta\2
+./sections/function.tex:52: Undefined control sequence.
+l.52 ...=|p_{kick}|\cdot\cos\theta, (0\leq\theta\2
                                                   \pi)
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -1404,43 +1378,24 @@ spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
 
-Overfull \hbox (81.97797pt too wide) detected at line 70
+Overfull \hbox (81.97797pt too wide) detected at line 67
 []\TU/latinmodern-math.otf(1)/m/n/10.95 𝑚[][]𝑥[] = 𝐹[] + 𝐹[]+ < 
 𝐹[] >= −𝑘[]𝑥[] + [] 𝑎[][] + ℏ𝛾[] ⋅ |[]|
  []
 
-[2] [3]
-./sections/function.tex:103: Undefined control sequence.
-l.103 ...長$\lambda$を用いて$\omega_0=2\pic
-                                                  /\lambda$である。󿿿
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-) (./sections/table.tex (./sections/params.tex) [4]
-./sections/table.tex:16: Extra alignment tab has been changed to \cr.
-<recently read> \endtemplate 
-                             
-l.16         微小時間&
-                          $dt$&\dtval&s\\
-You have given more \span or & marks than there were
-in the preamble to the \halign or \valign now in progress.
-So I'll assume that you meant to type \cr instead.
-
-./sections/table.tex:25: Missing $ inserted.
+[2] [3]) (./sections/table.tex (./sections/params.tex) [4]
+./sections/table.tex:21: Missing $ inserted.
 <inserted text> 
                 $
-l.25 ...係数 & $\alpha$ & \alphaval & N$\cdot$m^
+l.21 ...係数 & $\alpha$ & \alphaval & N$\cdot$m^
                                                   2\\
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
 
-./sections/table.tex:26: Extra }, or forgotten $.
+./sections/table.tex:22: Extra }, or forgotten $.
 <template> \unskip \ltjfakeboxbdd \hfil }
                                          \hskip \tabcolsep \endtemplate 
-l.26         冷
+l.22         冷
                 却レーザー周波数 & $\gamma$ & \gammaval & rad/s\\
 I've deleted a group-closing symbol because it seems to be
 spurious, as in `$x}$'. But perhaps the } is legitimate and
@@ -1448,24 +1403,69 @@ you forgot something else, as in `\hbox{$x}'. In such cases
 the way to recover is to insert both the forgotten and the
 deleted material, e.g., by typing `I$}'.
 
-./sections/table.tex:26: Missing $ inserted.
+./sections/table.tex:22: Missing $ inserted.
 <inserted text> 
                 $
-l.26         冷
+l.22         冷
                 却レーザー周波数 & $\gamma$ & \gammaval & rad/s\\
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
 
-./sections/table.tex:26: Missing } inserted.
+./sections/table.tex:22: Missing } inserted.
 <inserted text> 
                 }
-l.26         冷
+l.22         冷
                 却レーザー周波数 & $\gamma$ & \gammaval & rad/s\\
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
 With luck, this will get me unwedged. But if you
 really didn't forget anything, try typing `2' now; then
 my insertion and my current dilemma will both disappear.
+
+./sections/table.tex:39: Undefined control sequence.
+l.39 ...  第１固有振動数 & $\nu_1$ & \fvala
+                                                   & Hz\\
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+./sections/table.tex:40: Undefined control sequence.
+l.40 ...  第２固有振動数 & $\nu_2$ & \fvalb
+                                                   & Hz\\
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+./sections/table.tex:41: Undefined control sequence.
+l.41 ...  第３固有振動数 & $\nu_3$ & \fvalc
+                                                   & Hz\\
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+./sections/table.tex:42: Undefined control sequence.
+l.42 ...  第４固有振動数 & $\nu_4$ & \fvald
+                                                   & Hz\\
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+./sections/table.tex:43: Undefined control sequence.
+l.43 ...  第５固有振動数 & $\nu_5$ & \fvale
+                                                   & Hz\\
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
 
 ) [5] ("C:/Users/ito hayato/講議/3秋/4-3P演習/prog/out/main.aux")
  ***********
@@ -1480,10 +1480,10 @@ Here is how much of LuaTeX's memory you used:
  1813 words of node memory still in use:
    10 hlist, 2 vlist, 5 rule, 2 glue, 4 kern, 1 glyph, 553 attribute, 54 glue_sp
 ec, 61 attribute_list, 1 write, 13 user_defined nodes
-   avail lists: 1:2,2:22663,3:212,4:256,5:198,6:28,7:2935,8:67,9:1433,10:22,11:2
+   avail lists: 1:3,2:22272,3:214,4:260,5:198,6:27,7:2660,8:67,9:1340,10:22,11:2
 0
  32516 multiletter control sequences out of 65536+600000
- 64 fonts using 63963571 bytes
+ 64 fonts using 63963495 bytes
  104i,10n,99p,2037b,311s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/ito hayato/AppData/Local/Programs/MiKTeX/fonts/opentype/public/lm-math
 /latinmodern-math.otf><C:/Users/ito hayato/AppData/Local/Programs/MiKTeX/fonts/o
@@ -1496,7 +1496,7 @@ ktex/fonts/opentype/public/lm/lmroman12-bold.otf><c:/users/ito hayato/appdata/lo
 cal/programs/miktex/fonts/opentype/public/lm/lmroman12-regular.otf><C:/Users/ito
  hayato/AppData/Local/Programs/MiKTeX/fonts/opentype/public/haranoaji/HaranoAjiM
 incho-Regular.otf>
-Output written on main.pdf (5 pages, 128573 bytes).
+Output written on main.pdf (5 pages, 127376 bytes).
 
 PDF statistics: 74 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 1048576)
