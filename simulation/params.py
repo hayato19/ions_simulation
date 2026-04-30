@@ -1,6 +1,7 @@
 # パラメータ格納
 
 import math
+import numpy as np
 from decimal import Decimal, getcontext
 
 getcontext().prec = 50  # 計算精度
@@ -26,3 +27,32 @@ cycle_time = cool_time + spec_time
 # --- physical constants ---
 hbar = Decimal("1.054e-34")     # ディラック定数
 NA   = Decimal("6.02214076e23") # アボガドロ定数
+
+def set_particle_params(M):
+    """
+    粒子ごとのパラメータを種類(posit)に応じて設定する
+    posit[i] == 1 : Beイオン
+    posit[i] != 1 : テスト粒子
+    """
+
+    m_arr     = np.empty(M)
+    k_arr     = np.empty(M) # ポテンシャル拘束の係数
+    kl_arr    = np.empty(M) # ρ計算時の係数k
+    gamma_arr = np.empty(M)
+    S0_arr    = np.empty(M)
+    delta_arr = np.empty(M)
+
+    two_pi = 2.0 * math.pi
+
+    for i in range(M):
+
+        M_mol = Decimal("9e-3")  # 9 mg/mol
+        m_arr[i] = float(M_mol / NA)
+        trap_f = 1e6
+        k_arr[i]     = (two_pi * trap_f)**2 * m_arr[i]
+        kl_arr[i]    = two_pi / 313e-9
+        gamma_arr[i] = 20.0e6 * two_pi
+        S0_arr[i]    = 10
+        delta_arr[i] = -40.0e6 * two_pi
+
+    return m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr
