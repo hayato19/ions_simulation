@@ -5,7 +5,7 @@ from simulation.forces import cooling_step, heating_step, calculate_rho
 
 
 def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
-                   S0, kl, gamma, delta, ips, ht, mode):
+                   S0, kl, gamma, delta, ips, ht):
 
     M = x.shape[1]
     x_now = x[0, :].copy()
@@ -31,7 +31,7 @@ def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
 
         f_tmp = np.zeros(M)
         for i in range(M):
-            f_tmp[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i], mode)
+            f_tmp[i] = cooling_step(vn[i], S0[i], kl[i], gamma[i], delta[i])
         a += f_tmp / m
         return a, f_tmp
 
@@ -80,7 +80,7 @@ def rk4_step_multi(m, k, x, v, f, dt, N, w, alpha, eps,
             for i in range(M):
                 dv = heating_step(
                     v_now[i], S0[i], kl[i], gamma[i], delta[i],
-                    m[i], ips, ht, dt, mode
+                    m[i], ips, ht, dt
                 )
                 v_now[i] += dv
                 heating_log.append((step, i, float(dv)))
