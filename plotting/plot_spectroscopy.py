@@ -1,9 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import os
+from datetime import datetime
+
 plt.rcParams["font.size"] = 15
 
-def plot_spectroscopy(omega_sp, rho_int, omega_0, f_modes_hz, mode="sum"):
+def plot_spectroscopy(omega_sp, rho_int, omega_0, f_modes_hz, mode="sum", save_dir="./figs"):
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_name = f"spectroscopy_{mode}_{timestamp}.png"
+    save_path = os.path.join(save_dir, save_name)
 
     plt.figure(figsize=(8, 5))
 
@@ -22,19 +31,13 @@ def plot_spectroscopy(omega_sp, rho_int, omega_0, f_modes_hz, mode="sum"):
     else:
         raise ValueError("mode must be 'sum', 'mean', or 'each'")
 
-    # ω0
-    # plt.axvline(0, color="black", linestyle="--", linewidth=1, label=r"$\omega_0$")
-
-    # サイドバンド候補：ω0 ± 2π f_n
-    # for f in f_modes_hz:
-    #     w = omega_0 + 2*math.pi*f
-    #     plt.axvline(w, color="gray", linestyle="--", linewidth=1)
-    #     w = omega_0 - 2*math.pi*f
-    #     plt.axvline(w, color="gray", linestyle="--", linewidth=1)
-
     plt.xlabel(r"angular frequency $\omega$ [rad/s]")
     plt.ylabel(r"integrated $\rho_{\mathrm{sp}}$")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
+
+    plt.savefig(save_path, dpi=200)
     plt.show()
+
+    print("Saved:", save_path)

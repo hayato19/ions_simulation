@@ -8,8 +8,8 @@ getcontext().prec = 50  # 計算精度
 
 # --- params ---
 dt = 1e-9        # 時間刻み（0.05ns）
-N  = 500 * 3 * 10    # 記録数
-w  = 50 // 3         # 記録間隔（w ステップに 1 回記録）
+N  = 1500000    # 記録数
+w  = 15         # 記録間隔（w ステップに 1 回記録）
                      # ステップ数　= N * w
 
 alpha = 2.3e-28       # クーロン反発の係数
@@ -52,7 +52,7 @@ def set_particle_params(M):
         k_arr[i]     = (two_pi * trap_f)**2 * m_arr[i]
         kl_arr[i]    = two_pi / 313e-9
         gamma_arr[i] = 20.0e6 * two_pi
-        S0_arr[i]    = 10
+        S0_arr[i]    = 1
         delta_arr[i] = -40.0e6 * two_pi
 
     return m_arr, k_arr, kl_arr, gamma_arr, S0_arr, delta_arr

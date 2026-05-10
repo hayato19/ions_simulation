@@ -18,7 +18,7 @@ def main():
     # 初期条件設定
     # ======================================
 
-    M = 2
+    M = 1
     x0s = np.linspace(-12e-6, 12e-6, M)
     v0s = 0.0
     start_time = time.time()
@@ -70,6 +70,7 @@ def main():
     #     s0=S0_arr[0],  # dimensionless
     # )
     # plot_t(t, T, T_min, M, n_sum, 2)
+    
     with open("tex/sections/params.tex","w",encoding="utf-8") as f:
         f.write(rf"\newcommand{{\Mval}}{{{M}}}" + "\n")
         f.write(rf"\newcommand{{\dtval}}{{{dt}}}" + "\n")

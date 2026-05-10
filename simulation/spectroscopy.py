@@ -30,9 +30,12 @@ def calculate_rho_sp(M, v):
     for i in range(len(omega_sp)):
         sum_rho = np.zeros(M)
         for j in range(N + 1):
-            v_now = v[j, :]
-            rho_sp = s_sp / 2 / (s_sp + 1 + 4 / (gamma ** 2) * (delta_sp[i] - k_sp[i] * v_now) ** 2)
-            sum_rho += rho_sp * dt_rec
+            if j > (N+1)/2:
+                v_now = v[j, :]
+                rho_sp = s_sp / 2 / (s_sp + 1 + 4 / (gamma ** 2) * (delta_sp[i] - k_sp[i] * v_now) ** 2)
+                sum_rho += rho_sp * dt_rec
+            else :
+                continue
 
         rho_int[i, :] = sum_rho
         if i % 50 == 0:
