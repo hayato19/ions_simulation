@@ -13,7 +13,7 @@ def calculate_spec_bloch(M, x, v):
     ramda = 313e-9
     omega_0 = 2 * math.pi * c / ramda
     t_max = N * w
-    scale = 2e6 * 2 * math.pi
+    scale = 1e7 * 2 * math.pi
     delta = np.linspace(scale, -scale, 300)
     rho_int = np.zeros((len(delta), M))
 

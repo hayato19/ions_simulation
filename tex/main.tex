@@ -43,22 +43,22 @@
 
     \section{各種パラメータ}
         以上の計算を行う際の各種パラメータは以下のように設定した。
-\begin{align}
-    dt &= 25(ns)\\
-    N &= 320000\\
-    t_{max} &= dt * N = 8(ms)\\
-    \Omega_0 &= 1 (rad/s)\\
+    \begin{align}
+        dt &= 25(ns)\\
+        N &= 320000\\
+        t_{max} &= dt * N = 8(ms)\\
+        \Omega_0 &= 1 (rad/s)\\
         \lambda &= 313(nm)\\
         k &= 2\pi / \lambda(rad/s)\\
-        f &= 1(MHz)\\
+        f &= 2(MHz)\\
         \Delta &= [-150\cdot2\pi , 150\cdot2\pi](M\cdot rad/s)
     \end{align}
 
     \section{結果}
     デチューニング$\Delta$に対して、$\int_0^{t_{max}} \rho_{ee} dt$の値をプロットしたスペクトル図をA,Bの両方の方法計算し画像データを保存した。\\
-    Aの結果：spectroscopy_A.png\\
-    Bの結果：spectroscopy_B.png\\
-    また、全時間範囲での粒子の位置をプロットした図をx_vs_time.pngとして保存した。\\
+    Aの結果：\verb|spectroscopy_A.png|\\
+    Bの結果：\verb|spectroscopy_B.png|\\
+    また、全時間範囲での粒子の位置をプロットした図を\verb|x_vs_time.png|として保存した。\\
 
 
 
