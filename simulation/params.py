@@ -8,7 +8,7 @@ getcontext().prec = 50  # 計算精度
 
 # --- params ---
 dt = 25e-9        # 時間刻み（0.05ns）
-N  = 320000    # 記録数, 寿命1.6us/dt * 10000
+N  = 600000   # 記録数, 寿命1.6us/dt * 10000
 w  = 1         # 記録間隔（w ステップに 1 回記録）
                      # ステップ数　= N * w
 
@@ -16,7 +16,7 @@ alpha = 2.3e-28       # クーロン反発の係数
 eps   = 1e-7          # 発散防止のための微小数
 
 # ---- heating parameters ----
-ht  = 1000      # heating 判定間隔
+ht  = 1      # heating 判定間隔
 ips = 0         # scattering param
 
 # ---- operation parameters ----

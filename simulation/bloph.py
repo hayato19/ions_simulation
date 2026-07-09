@@ -6,7 +6,8 @@ from matplotlib import image
 
 from simulation.params import dt
 
-Gamma = 2 * math.pi * 100e3 # 自然放出率(rad/s)
+s_gamma = 10
+Gamma = 2 * math.pi * s_gamma * 1000 # 自然放出率(rad/s)
 Omega_0 = 1 # 位相を含まないラビ振動数(rad/s)
 ramda = 313e-9 # 波長(m)
 k = 2 * math.pi / ramda # 端数(rad/m)

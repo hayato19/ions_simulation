@@ -6,7 +6,7 @@ def initialize_arrays_multi(M, N, w, dt, x0s, v0s=0.0):##粒子の位置、速�
     total_steps = N * w
     t_end = total_steps * dt
 
-    t = np.linspace(0.0, t_end, N + 1)
+    t = np.linspace(0, t_end, N + 1)
 
     x0s = np.asarray(x0s, dtype=float)
     v0s = np.asarray(v0s, dtype=float)

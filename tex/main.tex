@@ -5,7 +5,7 @@
 \usepackage{amsmath}
 \usepackage{unicode-math}
 
-\title{位相変化効果の導入計算}
+\title{トラップ中のイオン運動の半古典的シミュレーション}
 \author{Hayato Ito}
 \date{\today}
 
@@ -13,52 +13,11 @@
 
     \maketitle
 
-    \section{概要}
-    励起状態密度を計算する際に、レーザーの位相変化の計算を導入する。
+    \input{sections/background.tex}
+    \section{理論}
+    \input{sections/function.tex}
 
-    \section{計算方法}
-１ステップあたりの$\rho_{gg}$, $\rho_{ge}$の時間発展を次の式で表す。
-\begin{align}
-    &\dot{\rho_{gg}} = \Gamma \rho_{ee} + \Omega_{(t)} Im(\rho_{ge})\\
-    &\dot{\rho_{eg}} = -(\frac{\Gamma}{2} + i\Delta)\rho_{eg} + i\frac{\Omega_{(t)}}{2}(\rho_{gg}-\rho_{ee})\\
-    &\dot{\rho_{ge}} = \dot{\rho_{eg}}^*
-\end{align}
-これを４次ルンゲクッタ法で計算し、各ステップで$\rho_{gg}$, $\rho_{ge}$を更新する。この時の$\Gamma$,$\Delta$は以下の値である
-\begin{align}
-    \Gamma &= 2\pi \gamma_{(rad/s)}\\
-    \Delta &= 2\pi f * n_{(rad/s)}, f = 1(MHz), n=-150, -149, ..., 150
-\end{align}
-    また$\Omega_{(t)}$は時間発展の計算ステップにおいて以下の２通り計算した。
-\begin{align}
-    (A)&\Omega_{(t)} = \Omega_0 e^{ikx_{t}}\\
-    (B)&\Omega_{(t)} = \Omega_{(t-dt)} e^{ikv_{t-dt}dt}\\
-    &k = 2\pi / \lambda
-\end{align}
-    以上の計算を、全体のステップの後半($t_{max}/2 < t \le t_{max}$)で行うことで、$\rho_{ee}$の積分を計算する
-\begin{align}
-    \rho_{ee} &= 1 - \rho_{gg}\\
-    \int_0^{t_{max}} \rho_{ee} dt &= \sum_{n=0}^{t_{max}/dt} Re(\rho_{ee(n)}) * dt
-\end{align}
-    以上の計算を、$n=-150, -149, ..., 150$の全てのデチューニングに対して行うことで、スペクトル図を得る。
-
-    \section{各種パラメータ}
-        以上の計算を行う際の各種パラメータは以下のように設定した。
-    \begin{align}
-        dt &= 25(ns)\\
-        N &= 320000\\
-        t_{max} &= dt * N = 8(ms)\\
-        \Omega_0 &= 1 (rad/s)\\
-        \lambda &= 313(nm)\\
-        k &= 2\pi / \lambda(rad/s)\\
-        f &= 2(MHz)\\
-        \Delta &= [-150\cdot2\pi , 150\cdot2\pi](M\cdot rad/s)
-    \end{align}
-
-    \section{結果}
-    デチューニング$\Delta$に対して、$\int_0^{t_{max}} \rho_{ee} dt$の値をプロットしたスペクトル図をA,Bの両方の方法計算し画像データを保存した。\\
-    Aの結果：\verb|spectroscopy_A.png|\\
-    Bの結果：\verb|spectroscopy_B.png|\\
-    また、全時間範囲での粒子の位置をプロットした図を\verb|x_vs_time.png|として保存した。\\
+    \input{sections/OBE.tex}
 
 
 

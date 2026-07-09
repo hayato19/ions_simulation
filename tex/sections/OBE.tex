@@ -1,0 +1,110 @@
+\subsection{OBEの記述}
+optical Bloch equation(OBE)は密度行列$\rho$の時間発展を記述する方程式である。これにシミュレーションから得た粒子の情報を入力し平行して計算することで、レーザーの位相変化の効果を考慮した原子の状態の時間発展を計算することができる。
+\subsubsection{OBEの方程式}
+     OBEは以下のように書ける。
+    \begin{equation}
+        \frac{d}{dt}\rho = -\frac{i}{\hbar}[H,\rho] + \mathcal{L}(\rho)
+    \end{equation}
+    ここで、$H$はハミルトニアン、$\mathcal{L}(\rho)$はリンドブラッド項である。
+    ハミルトニアンは以下のように書ける。
+    \begin{equation}
+        H = H_0 + H_{int}
+    \end{equation}
+    ここで、$H_0$は原子のエネルギーを表す項、$H_{int}$はレーザーとの相互作用を表す項である。
+\subsubsection{各項の記述}
+    $H_0$は以下のように書ける。
+    \begin{equation}
+        H_0 = \hbar\omega_0 |e\rangle\langle e|
+    \end{equation}
+    ここで、$\omega_0$は原子の遷移周波数、$|e\rangle$は励起状態を表すベクトルである。
+    $H_{int}$は以下のように書ける。
+    \begin{equation}
+        H_{int}=-\frac{\hbar}{2}\left(\Omega(t)|e\rangle\langle g|+\Omega^*(t)|g\rangle\langle e|\right)
+    \end{equation}
+    ここで、$\Omega(t)$はRabi周波数、$|g\rangle$は基底状態を表すベクトルである。
+    リンドブラッド項$\mathcal{L}(\rho)$は崩壊演算子$C=\sqrt{\Gamma}|g\rangle\langle e|$を用いて以下のように書ける。
+    \begin{equation}
+        \mathcal{L}(\rho)=C\rho C^\dagger-\frac12
+        \left(C^\dagger C\rho+\rho C^\dagger C\right)
+    \end{equation}
+    ここで、$\Gamma$は励起状態の寿命を表す定数である。
+\subsubsection{位相変化の効果の導入}
+レーザー電場は$E(x,t)\propto e^{i(kx-\omega t)}$の空間位相を持つ。
+イオンが運動する場合、イオンが感じるレーザー位相は$x=x(t)$によって時間変化する。
+この効果を導入するため、Rabi 周波数に位相因子$e^{ikx(t)}$を含める。
+    \begin{equation}
+        \Omega(t)=\Omega_0 e^{ikx(t)}
+    \end{equation}
+    ここで、$\Omega_0$はRabi周波数の振幅、$k$は波数、$x(t)$は粒子の位置であり、$dt$は時間ステップである。
+    位相変化の効果を考慮することで、原子の状態の時間発展にレーザーの位相変化がどのように影響するかを計算することができる。
+\subsubsection{状態密度行列要素の時間発展}
+    密度行列$\rho$の要素を以下のように定義する。
+    \begin{equation}
+        \rho = \begin{pmatrix}
+        \rho_{gg} & \rho_{ge} \\
+        \rho_{eg} & \rho_{ee}
+        \end{pmatrix}
+    \end{equation}
+    ここで、$\rho_{gg}$は基底状態の確率、$\rho_{ee}$は励起状態の確率、$\rho_{ge}$は基底状態と励起状態のコヒーレンスを表す要素である。
+    OBEを用いて、これらの要素の時間発展を計算することができる。
+    また、高速振動成分を除去するため、 レーザー周波数 $\omega_L$ で回転する座標系へ移る。
+    このとき、回転波近似 (Rotating Wave Approximation)を適用することで、高速振動項を無視できる。$\Delta_{sp} = \omega_0 - \omega_L$と定義すると、以下のような方程式が得られる。
+    \begin{align}
+        &\dot{\rho}_{gg}=\Gamma\rho_{ee}+\frac{i}{2}\left(\Omega^*(t)\rho_{eg}-\Omega(t)\rho_{ge}\right)\\
+        &\dot{\rho_{eg}} = -(\frac{\Gamma}{2} + i\Delta_{sp})\rho_{eg} + i\frac{\Omega(t)}{2}(\rho_{gg}-\rho_{ee})\\
+        &\dot{\rho_{ge}} = \dot{\rho_{eg}}^*
+    \end{align}
+    ここで、$\Delta_{sp}$はレーザーのデチューニングを表す定数である。
+    これらの方程式を数値的に解くことで、原子の状態の時間発展を計算することができる。
+\subsubsection{スペクトルの計算}
+    励起状態密度$\rho_{ee}$は、原子の励起確率に対応する。
+    したがって、これを時間積分することで、あるデチューニングに対する総励起量をスペクトル強度として評価できる。。
+    \begin{equation}
+        \int_0^{t_{max}} \rho_{ee} dt = \sum_{n=0}^{t_{max}/dt} Re(\rho_{ee(n)}) * dt
+    \end{equation}
+    ここで、$t_{max}$はシミュレーションの最大時間、$dt$は時間ステップである。
+    デチューニング$\Delta_{sp}$について掃引しこの積分を計算することで、スペクトル図を得ることができる。
+\subsubsection{サイドバンドの発生}
+    以下では、弱励起条件
+\[
+    \rho_{gg}\simeq1,
+    \qquad
+    \rho_{ee}\ll1
+\]
+    を仮定する。この近似により、コヒーレンス$\rho_{eg}$の応答を線形化して解析できる。
+    粒子が振動しているとき、$x(t) = A\cos\omega_m t$と表すことができる。ここで、$A$は振動の振幅、$\omega_m$は振動の周波数である。この場合、Rabi周波数$\Omega(t)$は以下のように書ける。
+    \begin{equation}
+    \Omega(t) = \Omega_0 e^{ikA\cos\omega_m t}
+    \end{equation}
+    ここで Jacobi–Anger 展開を用すると、以下のように書ける。
+    \begin{equation}
+    \Omega(t) = \Omega_0 \sum_{n=-\infty}^{\infty} i^n J_n(kA) e^{in\omega_m t}
+    \end{equation}
+    ここで、$J_n(kA)$は第一種のベッセル関数である。
+    これを$\rho_{ge}$の方程式に代入すると、以下のように書ける。
+    \begin{equation}
+    \dot{\rho_{eg}} = -(\frac{\Gamma}{2} + i\Delta_{sp})\rho_{eg} + i\frac{\Omega_0}{2} \sum_{n=-\infty}^{\infty} i^n J_n(kA) e^{in\omega_m t} (\rho_{gg}-\rho_{ee})
+    \end{equation}
+    $\rho_{eg}$を多項式
+    \begin{equation}
+        \rho_{eg}=\sum_{n=-\infty}^{\infty}
+        c_n e^{in\omega_m t}
+    \end{equation}
+    で表せるとする。これを方程式へ代入し、$e^{in\omega_m t}$と比較を行うことで以下の$c_n$を得ることができる。
+    \begin{equation}
+        c_n=\frac{i^{n+1}\Omega_0 J_n(kA)}{\Gamma/2+i(\Delta_{sp}-n\omega_m)}
+    \end{equation}
+    よって、$\rho_{eg}$は以下のように書ける。
+    \begin{equation}
+    \rho_{eg} = \sum_{n=-\infty}^{\infty} \frac{i^{n+1} \Omega_0 J_n(kA)}{\Gamma/2 + i(\Delta_{sp} - n\omega_m)} e^{in\omega_m t}
+    \end{equation}
+    これを$\rho_{gg}$の方程式に代入すると、以下のように書ける。
+    \begin{equation}
+    \dot{\rho_{gg}} = \Gamma \rho_{ee} + \Omega_0 Im\left( \sum_{n=-\infty}^{\infty} \frac{i^{n+1} \Omega_0 J_n(kA)}{\Gamma/2 + i(\Delta - n\omega_m)} e^{in\omega_m t} \right)
+    \end{equation}励起状態密度 $\rho_{ee}$ は、 コヒーレンス $\rho_{eg}$ の応答強度に比例する。
+    したがって、$\rho_{eg}$ が$\Delta=n\omega_m$で共鳴するとき、 励起状態密度にもピークが現れる。 その結果、 スペクトルには$\Delta=n\omega_m$に対応するサイドバンド構造が現れる。
+したがって、
+イオンの振動モード周波数$\omega_m$は、レーザースペクトル中に\[
+    \omega_L \pm n\omega_m
+\]のサイドバンドとして現れる。
+これは、イオン運動による位相変調が、レーザー周波数へ写像されるためである。
