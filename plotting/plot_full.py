@@ -18,7 +18,7 @@ def plot_full_x(t, xM, save_dir="./figs"):
     plt.figure(figsize=(12, 6))
     M = xM.shape[1]
 
-    mag = 6
+    mag = 1
     n = len(xM) // mag
     xM = xM[:n]
     t = t[:n]
