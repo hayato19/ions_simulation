@@ -23,7 +23,9 @@ bloch_spec_qutip.py
 from __future__ import annotations
 
 import math
+import time
 import os
+import traceback
 from datetime import datetime
 
 import numpy as np
@@ -41,6 +43,10 @@ k = 2 * math.pi / ramda                 # 波数 [rad/m]
 c = 299_792_458.0                       # 光速 [m/s]
 somega_0 = k * c                        # 参考値 [rad/s]
 
+def print_log(message):
+    """現在時刻を付けてログを表示する"""
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{current_time}] {message}", flush=True)
 
 def _build_two_level_system():
     """
@@ -136,29 +142,51 @@ def _make_omega_from_v(v_segment: np.ndarray) -> np.ndarray:
     return omega_values
 
 
-def _solve_one_particle_one_delta(delta_i: float, v_segment: np.ndarray) -> np.ndarray:
-    """
-    1粒子・1 detuning について QuTiP で OBE を解く。
+def _solve_one_particle_one_delta(
+        delta_i: float,
+        v_segment: np.ndarray,
+        tlist: np.ndarray,
+        system,
+        solver_method: str = "adams",
+        rtol: float = 1e-2,
+        atol: float = 1e-8,
+) -> np.ndarray:
 
-    既存コードとの対応:
-        - v_segment は v[step - 1, j] に対応。
-        - 状態更新の時間刻みは bloph.py と同じ dt。
-        - 保存する rho_ee_t は各ステップ後の rho_ee に対応するように result.expect[0][1:] を使う。
-
-    Hamiltonian:
-        H(t) = delta |e><e|
-               - 1/2 [ Ω(t)|e><g| + Ω*(t)|g><e| ]
-
-    Collapse:
-        C = sqrt(Gamma) |g><e|
-    """
-    sigma_plus, sigma_minus, Pe, rho0, c_ops = _build_two_level_system()
+    sigma_plus, sigma_minus, Pe, rho0, c_ops = system
 
     n_steps_save = len(v_segment)
 
-    # bloph.py の OBE 更新は dt を使うため、QuTiP の時間軸も dt 間隔にする。
-    # 結果の先頭 t=0 は初期状態なので、最後に [1:] で落として既存出力 shape に合わせる。
-    tlist = np.arange(n_steps_save + 1, dtype=float) * dt
+    if len(tlist) != n_steps_save + 1:
+        raise ValueError(
+            f"tlist length mismatch: len(tlist)={len(tlist)}, "
+            f"n_steps_save+1={n_steps_save + 1}"
+        )
+
+    # 変更: QuTiP に渡す時間軸が有限・単調増加かを事前確認する。
+    if len(tlist) < 2:
+        raise ValueError(f"tlist must contain at least 2 points: len={len(tlist)}")
+
+    if not np.all(np.isfinite(tlist)):
+        raise ValueError("tlist contains non-finite values")
+
+    tdiff = np.diff(tlist)
+    if np.any(tdiff <= 0):
+        raise ValueError(
+            "tlist must be strictly increasing: "
+            f"min diff={np.min(tdiff)}"
+        )
+
+    if solver_method not in ("adams", "bdf"):
+        raise ValueError(
+            f"solver_method must be 'adams' or 'bdf', "
+            f"but got {solver_method!r}"
+        )
+
+    if not np.isfinite(rtol) or rtol <= 0:
+        raise ValueError(f"rtol must be positive and finite: rtol={rtol}")
+
+    if not np.isfinite(atol) or atol <= 0:
+        raise ValueError(f"atol must be positive and finite: atol={atol}")
 
     omega_values = _make_omega_from_v(v_segment)
     omega_coeff = _complex_interp_func(tlist, omega_values)
@@ -170,7 +198,7 @@ def _solve_one_particle_one_delta(delta_i: float, v_segment: np.ndarray) -> np.n
         delta_i * Pe,
         [-0.5 * sigma_plus, omega_coeff],
         [-0.5 * sigma_minus, omega_conj_coeff],
-    ]
+        ]
 
     result = mesolve(
         H,
@@ -180,15 +208,16 @@ def _solve_one_particle_one_delta(delta_i: float, v_segment: np.ndarray) -> np.n
         e_ops=[Pe],
         options={
             "store_states": False,
+            "method": solver_method,
             "nsteps": 10000,
+            "rtol": rtol,
+            "atol": atol,
         },
     )
 
     rho_ee_t = np.asarray(result.expect[0], dtype=float)
 
-    # t=0 は初期状態 rho_ee=0 なので、既存コードの「1ステップ更新後に保存」に合わせて除く。
     return rho_ee_t[1:]
-
 
 def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
     """
@@ -234,6 +263,24 @@ def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
     end_step = N
     n_steps_save = end_step - start_step
 
+    # 変更: 時間刻みと保存区間を QuTiP 呼び出し前に検証する。
+    if not np.isfinite(dt) or dt <= 0:
+        raise ValueError(f"dt must be positive and finite: dt={dt}")
+
+    if n_steps_save <= 0:
+        raise ValueError(
+            f"n_steps_save must be positive: "
+            f"start_step={start_step}, end_step={end_step}"
+        )
+
+    # QuTiP 積分器設定
+    solver_method = "bdf"
+    solver_rtol = 1e-5
+    solver_atol = 1e-10
+
+    tlist = np.arange(n_steps_save + 1, dtype=float) * dt
+    system = _build_two_level_system()
+
     save_dir = "./data"
     os.makedirs(save_dir, exist_ok=True)
 
@@ -263,16 +310,31 @@ def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
     print(f"dt_rec for spectrum integration = {dt_rec}")
     print(f"Gamma = {Gamma}")
     print(f"Omega_0 = {Omega_0}")
+    print(f"solver_method = {solver_method}")  # 変更
+    print(f"solver_rtol = {solver_rtol}")      # 変更
+    print(f"solver_atol = {solver_atol}")      # 変更
 
+    print_log(f"start Cal_rho_ee\n")
     for i in range(len(delta)):
+        print_log(f"Cal delta = {i}\n")
         for j in range(M):
+            print_log(f"Cal particle = {j}\n")
             try:
                 # 添付 bloch_spec.py では bloph_timeeq_v に v[step - 1, j] を渡している。
                 # したがって、QuTiP 版でも同じ速度列を使う。
                 v_segment = v[start_step - 1:end_step - 1, j]
 
-                rho_ee_t = _solve_one_particle_one_delta(delta[i], v_segment)
-
+                print_log(f"call solving me system at [{i}][{j}]")
+                rho_ee_t = _solve_one_particle_one_delta(
+                    delta[i],
+                    v_segment,
+                    tlist,
+                    system,
+                    solver_method=solver_method,  # 変更: calculate側の設定を反映
+                    rtol=solver_rtol,             # 変更: calculate側の設定を反映
+                    atol=solver_atol,             # 変更: calculate側の設定を反映
+                )
+                print_log(f"finish solving me system")
                 if len(rho_ee_t) != n_steps_save:
                     raise FloatingPointError(
                         f"rho_ee_t length mismatch: {len(rho_ee_t)} != {n_steps_save}"
@@ -288,7 +350,9 @@ def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
 
                 # 添付 bloch_spec.py の sum_rho += rho_ee.real * dt_rec に準拠。
                 # 台形積分ではなく単純和にして出力の意味をそろえる。
+                print_log(f"Cal int")
                 rho_int[i, j] = np.sum(rho_ee_t.real) * dt_rec
+                print_log(f"end of Cal int")
 
             except FloatingPointError as e:
                 print("Numerical error detected")
@@ -311,6 +375,10 @@ def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
                 print("x =", x[start_step - 1, j])
                 print("v =", v[start_step - 1, j])
 
+                print("----- traceback -----")
+                traceback.print_exc()
+                print("---------------------")
+
                 rho_ee_all[i, j, :] = np.nan
                 rho_int[i, j] = np.nan
 
@@ -320,8 +388,9 @@ def calculate_spec_bloch_qutip(M: int, x: np.ndarray, v: np.ndarray):
     rho_ee_all.flush()
 
     rho_int_path = os.path.join(save_dir, f"rho_int_{timestamp}.npy")
+    print_log(f"Save rho_int")
     np.save(rho_int_path, rho_int)
-
+    print_log(f"end of save rho_int")
     print("saved rho_ee:", rho_ee_path)
     print("saved rho_int:", rho_int_path)
     print("saved delta:", delta_path)

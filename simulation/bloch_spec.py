@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import math
 from simulation.params import dt, N, w, ht
 from simulation.bloph import phase_shift_x, phase_shift_v, bloph_timeeq_x, bloph_timeeq_v, Gamma
@@ -6,6 +7,10 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
+def print_log(message):
+    """現在時刻を付けてログを表示する"""
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{current_time}] {message}", flush=True)
 
 def calculate_spec_bloch(M, x, v):
     c = 299_792_458.0
@@ -42,14 +47,17 @@ def calculate_spec_bloch(M, x, v):
     delta_path = os.path.join(save_dir, f"delta_{timestamp}.npy")
     np.save(delta_path, delta)
 
+    print_log(f"start Cal_rho_ee\n")
     for i in range(len(delta)):  # レーザー周波数ごと
+        print_log(f"Cal delta = {i}\n")
         for j in range(M):
+            print_log(f"Cal particle = {j}\n")
             sum_rho = 0.0
 
             rho_gg = 1.0
             rho_ge = 0.0 + 0.0j
             Omega = 1
-
+            print_log(f"call solving me system at [{i}][{j}]")
             for step in range(start_step, end_step):
                 save_index = step - start_step
 
@@ -88,8 +96,10 @@ def calculate_spec_bloch(M, x, v):
                     rho_ee_all[i, j, save_index:] = np.nan
                     sum_rho = np.nan
                     break
-
+            print_log(f"finish solving me system")
+            print_log(f"Cal int")
             rho_int[i, j] = sum_rho
+            print_log(f"end of Cal int")
 
         if i % 50 == 0:
             print(f"calc {i}/{len(delta)}")
