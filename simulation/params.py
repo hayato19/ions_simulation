@@ -51,7 +51,7 @@ def set_particle_params(M):
         trap_f = 1e6
         k_arr[i]     = (two_pi * trap_f)**2 * m_arr[i]
         kl_arr[i]    = two_pi / 313e-9
-        gamma_arr[i] = 20.0e6 * two_pi
+        gamma_arr[i] = 80.0e6 * two_pi
         S0_arr[i]    = 1
         delta_arr[i] = -40.0e6 * two_pi
 

@@ -13,7 +13,10 @@ from simulation.calculation_t import T_ratio_with_and_without_COM, kB
 from plotting.plot_t import plot_t
 from simulation.solver_rk4 import rk4_step_multi
 from simulation.bloch_spec import calculate_spec_bloch
-from simulation.bloch_spec_qutip import calculate_spec_bloch_qutip
+
+#
+N_WORKERS = None
+
 
 def main():
     # ======================================
@@ -55,14 +58,13 @@ def main():
     # plot_full_rho(t, r, save_dir="./figs")
 
     # 可視化(全粒子のFFT、指定周波数範囲)
-    f_lines = plot_fft_all_particles(t, xM, dt, save_dir="./figs")
+    # f_lines = plot_fft_all_particles(t, xM, dt, save_dir="./figs")
 
     # 可視化(総エネルギー、全範囲)
     # plot_energy(t, e, save_dir="./figs")
 
     # 分光信号のシミュレーション
     calculate_spec_bloch(M, xM, vM)
-    # calculate_spec_bloch_qutip(M, xM, vM)
 
     # 温度による冷却の評価
     # T, T_min, n_sum = T_ratio_with_and_without_COM(
@@ -88,11 +90,11 @@ def main():
         f.write(rf"\newcommand{{\deltaval}}{{{delta_arr[0]}}}" + "\n")
         # f.write(rf"\newcommand{{\gammadval}}{{{gammad}}}" + "\n")
         # f.write(rf"\newcommand{{\Sspval}}{{{s_sp}}}" + "\n")
-        f.write(rf"\newcommand{{\fvala}}{{{f_lines[0]}}}" + "\n")
-        f.write(rf"\newcommand{{\fvalb}}{{{f_lines[1]}}}" + "\n")
-        f.write(rf"\newcommand{{\fvalc}}{{{f_lines[2]}}}" + "\n")
-        f.write(rf"\newcommand{{\fvald}}{{{f_lines[3]}}}" + "\n")
-        f.write(rf"\newcommand{{\fvale}}{{{f_lines[4]}}}" + "\n")
+        # f.write(rf"\newcommand{{\fvala}}{{{f_lines[0]}}}" + "\n")
+        # f.write(rf"\newcommand{{\fvalb}}{{{f_lines[1]}}}" + "\n")
+        # f.write(rf"\newcommand{{\fvalc}}{{{f_lines[2]}}}" + "\n")
+        # f.write(rf"\newcommand{{\fvald}}{{{f_lines[3]}}}" + "\n")
+        # f.write(rf"\newcommand{{\fvale}}{{{f_lines[4]}}}" + "\n")
 
 if __name__ == "__main__":
     main()
