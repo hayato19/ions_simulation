@@ -58,13 +58,10 @@ def main():
     # plot_full_rho(t, r, save_dir="./figs")
 
     # 可視化(全粒子のFFT、指定周波数範囲)
-    # f_lines = plot_fft_all_particles(t, xM, dt, save_dir="./figs")
+    f_lines = plot_fft_all_particles(t, xM, dt, save_dir="./figs")
 
     # 可視化(総エネルギー、全範囲)
     # plot_energy(t, e, save_dir="./figs")
-
-    # 分光信号のシミュレーション
-    calculate_spec_bloch(M, xM, vM)
 
     # 温度による冷却の評価
     # T, T_min, n_sum = T_ratio_with_and_without_COM(
@@ -73,7 +70,11 @@ def main():
     #     Gamma=gamma_arr[0],  # [rad/s]
     #     s0=S0_arr[0],  # dimensionless
     # )
-    # plot_t(t, T, T_min, M, n_sum, 2)
+    # plot_t(t, T, T_min, M, n_sum, 5)
+    # 分光信号のシミュレーション
+    calculate_spec_bloch(M, xM, vM)
+
+
 
     with open("tex/sections/params.tex","w",encoding="utf-8") as f:
         f.write(rf"\newcommand{{\Mval}}{{{M}}}" + "\n")
