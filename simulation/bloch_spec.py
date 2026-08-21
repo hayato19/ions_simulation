@@ -2,17 +2,11 @@ import numpy as np
 import time
 import math
 from simulation.params import dt, N, w, ht
-from simulation.bloph import (
-    phase_shift_x,
-    phase_shift_v,
-    bloph_timeeq_x,
-    bloph_timeeq_v,
-    Gamma,
-)
+from simulation.bloph import phase_shift_x, phase_shift_v, bloph_timeeq_x, bloph_timeeq_v, Gamma
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 
 
 # 各ワーカープロセスで共有する読み取り専用データ
@@ -30,14 +24,7 @@ def print_log(message):
     print(f"[{current_time}] {message}", flush=True)
 
 
-def _initialize_bloch_worker(
-        x,
-        v,
-        M,
-        start_step,
-        end_step,
-        dt_rec,
-):
+def _initialize_bloch_worker(x, v, M, start_step, end_step, dt_rec):
     """各ワーカープロセスの起動時に共通データを設定する。"""
     global _WORKER_X
     global _WORKER_V
@@ -59,17 +46,8 @@ def _calculate_one_delta(task):
     i, delta_i = task
 
     n_steps_save = _WORKER_END_STEP - _WORKER_START_STEP
-
-    rho_int_row = np.zeros(
-        _WORKER_M,
-        dtype=np.float64,
-    )
-
-    rho_ee_row = np.empty(
-        (_WORKER_M, n_steps_save),
-        dtype=np.float64,
-    )
-
+    rho_int_row = np.zeros(_WORKER_M, dtype=np.float64)
+    rho_ee_row = np.empty((_WORKER_M, n_steps_save), dtype=np.float64)
     errors = []
 
     for j in range(_WORKER_M):
@@ -81,10 +59,7 @@ def _calculate_one_delta(task):
         rho_ge = 0.0 + 0.0j
         Omega = 1.0 + 0.0j
 
-        for step in range(
-                _WORKER_START_STEP,
-                _WORKER_END_STEP,
-        ):
+        for step in range(_WORKER_START_STEP, _WORKER_END_STEP):
             save_index = step - _WORKER_START_STEP
 
             try:
@@ -97,22 +72,15 @@ def _calculate_one_delta(task):
                 )
 
                 if not np.isfinite(rho_ge):
-                    raise FloatingPointError(
-                        "rho_ge became non-finite"
-                    )
+                    raise FloatingPointError("rho_ge became non-finite")
 
                 if not np.isfinite(rho_ee):
-                    raise FloatingPointError(
-                        "rho_ee became non-finite"
-                    )
+                    raise FloatingPointError("rho_ee became non-finite")
 
                 if abs(rho_ge) > 1e6:
-                    raise FloatingPointError(
-                        "rho value diverged"
-                    )
+                    raise FloatingPointError("rho value diverged")
 
                 rho_ee_real = float(np.real(rho_ee))
-
                 rho_ee_row[j, save_index] = rho_ee_real
                 sum_rho += rho_ee_real * _WORKER_DT_REC
 
@@ -149,30 +117,21 @@ def _resolve_n_workers(n_workers, n_tasks):
         n_workers = max(1, logical_cores // 2)
 
     if not isinstance(n_workers, int):
-        raise TypeError(
-            "n_workers must be int or None"
-        )
+        raise TypeError("n_workers must be int or None")
 
     if n_workers <= 0:
-        raise ValueError(
-            "n_workers must be greater than 0"
-        )
+        raise ValueError("n_workers must be greater than 0")
 
     return min(n_workers, n_tasks), logical_cores
 
 
-def calculate_spec_bloch(
-        M,
-        x,
-        v,
-        n_workers=None,
-):
+def calculate_spec_bloch(M, x, v, n_workers=None):
     c = 299_792_458.0
     ramda = 313e-9
     omega_0 = 2 * math.pi * c / ramda
 
     scale = 0.5e7 * 2 * math.pi
-    delta = np.linspace(-scale, scale, 300)
+    delta = np.linspace(-scale, scale, 1000)
 
     mode = "each"
     dt_rec = dt * w
@@ -187,58 +146,35 @@ def calculate_spec_bloch(
     )
 
     save_dir = "./data"
-    os.makedirs(
-        save_dir,
-        exist_ok=True,
-    )
+    os.makedirs(save_dir, exist_ok=True)
 
-    timestamp = datetime.now().strftime(
-        "%Y%m%d_%H%M%S"
-    )
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 積分値
-    rho_int = np.zeros(
-        (len(delta), M)
-    )
-
-    rho_ee_path = os.path.join(
-        save_dir,
-        f"rho_ee_time_{timestamp}.npy",
-    )
+    rho_int = np.zeros((len(delta), M))
+    rho_ee_path = os.path.join(save_dir, f"rho_ee_time_{timestamp}.npy")
 
     rho_ee_all = np.lib.format.open_memmap(
         rho_ee_path,
         mode="w+",
         dtype=np.float64,
-        shape=(
-            len(delta),
-            M,
-            n_steps_save,
-        ),
+        shape=(len(delta), M, n_steps_save),
     )
 
     # delta も保存
-    delta_path = os.path.join(
-        save_dir,
-        f"delta_{timestamp}.npy",
-    )
-    np.save(
-        delta_path,
-        delta,
-    )
+    delta_path = os.path.join(save_dir, f"delta_{timestamp}.npy")
+    np.save(delta_path, delta)
 
     print_log("start Cal_rho_ee")
-    print_log(
-        f"logical processors = {logical_cores}"
-    )
-    print_log(
-        f"parallel workers = {n_workers}"
-    )
+    print_log(f"logical processors = {logical_cores}")
+    print_log(f"parallel workers = {n_workers}")
 
-    tasks = [
+    # 全タスクを一括submitせず、最大n_workers個だけ実行待ちに置く。
+    # これにより、Futureが保持するrho_ee_rowの数を制限する。
+    task_iter = iter(
         (i, float(delta_i))
         for i, delta_i in enumerate(delta)
-    ]
+    )
 
     completed_count = 0
 
@@ -254,108 +190,97 @@ def calculate_spec_bloch(
                     dt_rec,
             ),
     ) as executor:
-        futures = [
-            executor.submit(
-                _calculate_one_delta,
-                task,
+        # key: Future, value: そのFutureに対応するdelta index
+        # この辞書の要素数は最大n_workers個に制限する。
+        pending_futures = {}
+
+        # 最初のn_workers個だけ投入する。
+        for _ in range(n_workers):
+            try:
+                task = next(task_iter)
+            except StopIteration:
+                break
+
+            future = executor.submit(_calculate_one_delta, task)
+            pending_futures[future] = task[0]
+
+        while pending_futures:
+            # 少なくとも1タスク完了するまで待つ。
+            done, _ = wait(
+                pending_futures,
+                return_when=FIRST_COMPLETED,
             )
-            for task in tasks
-        ]
 
-        for future in as_completed(futures):
-            (
-                i,
-                rho_int_row,
-                rho_ee_row,
-                errors,
-            ) = future.result()
+            # 完了したFutureをpending_futuresから外し、
+            # 結果を書き込んだ後に参照を破棄する。
+            while done:
+                future = done.pop()
+                expected_i = pending_futures.pop(future)
 
-            # memmapへの書き込みは親プロセスだけが行う。
-            rho_int[i, :] = rho_int_row
-            rho_ee_all[i, :, :] = rho_ee_row
+                try:
+                    i, rho_int_row, rho_ee_row, errors = future.result()
+                except Exception as e:
+                    raise RuntimeError(
+                        f"delta task failed: i={expected_i}"
+                    ) from e
 
-            completed_count += 1
-
-            if errors:
-                for error in errors:
-                    print_log(
-                        "Numerical error detected"
-                    )
-                    print(
-                        "reason =",
-                        error["reason"],
-                    )
-                    print(
-                        "i =",
-                        error["i"],
-                    )
-                    print(
-                        "j =",
-                        error["j"],
-                    )
-                    print(
-                        "step =",
-                        error["step"],
-                    )
-                    print(
-                        "delta =",
-                        error["delta"],
-                    )
-                    print(
-                        "x =",
-                        error["x"],
-                    )
-                    print(
-                        "v =",
-                        error["v"],
-                    )
-                    print(
-                        "rho_ge =",
-                        error["rho_ge"],
-                    )
-                    print(
-                        "rho_ee =",
-                        error["rho_ee"],
+                if i != expected_i:
+                    raise RuntimeError(
+                        "delta index mismatch: "
+                        f"expected {expected_i}, got {i}"
                     )
 
-            if (
-                    completed_count % 10 == 0
-                    or completed_count == len(delta)
-            ):
-                print_log(
-                    f"calc {completed_count}/{len(delta)}"
-                )
+                # memmapへの書き込みは親プロセスだけが行う。
+                rho_int[i, :] = rho_int_row
+                rho_ee_all[i, :, :] = rho_ee_row
 
-            if completed_count % 20 == 0:
-                rho_ee_all.flush()
+                completed_count += 1
+
+                if errors:
+                    for error in errors:
+                        print_log("Numerical error detected")
+                        print("reason =", error["reason"])
+                        print("i =", error["i"])
+                        print("j =", error["j"])
+                        print("step =", error["step"])
+                        print("delta =", error["delta"])
+                        print("x =", error["x"])
+                        print("v =", error["v"])
+                        print("rho_ge =", error["rho_ge"])
+                        print("rho_ee =", error["rho_ee"])
+
+                if completed_count % 10 == 0 or completed_count == len(delta):
+                    print_log(f"calc {completed_count}/{len(delta)}")
+
+                if completed_count % 20 == 0:
+                    rho_ee_all.flush()
+
+                # rho_ee_rowは大きな配列なので、memmapへの書き込み後に
+                # 親プロセス側の参照を明示的に破棄する。
+                del rho_int_row
+                del rho_ee_row
+                del errors
+                del future
+
+            # 完了分を解放した後で、空いた枠だけ次のタスクを投入する。
+            # pending_futuresの要素数は常にn_workers以下になる。
+            while len(pending_futures) < n_workers:
+                try:
+                    task = next(task_iter)
+                except StopIteration:
+                    break
+
+                future = executor.submit(_calculate_one_delta, task)
+                pending_futures[future] = task[0]
 
     rho_ee_all.flush()
 
     # rho_int 保存
-    rho_int_path = os.path.join(
-        save_dir,
-        f"rho_int_{timestamp}.npy",
-    )
-    np.save(
-        rho_int_path,
-        rho_int,
-    )
+    rho_int_path = os.path.join(save_dir, f"rho_int_{timestamp}.npy")
+    np.save(rho_int_path, rho_int)
 
-    print(
-        "saved rho_ee:",
-        rho_ee_path,
-    )
-    print(
-        "saved rho_int:",
-        rho_int_path,
-    )
-    print(
-        "saved delta:",
-        delta_path,
-    )
+    print("saved rho_ee:", rho_ee_path)
+    print("saved rho_int:", rho_int_path)
+    print("saved delta:", delta_path)
 
-    return (
-        rho_ee_path,
-        rho_int_path,
-        delta_path,
-    )
+    return rho_ee_path, rho_int_path, delta_path

@@ -167,9 +167,9 @@ def load_rho_int_and_plot(
 
 
 if __name__ == "__main__":
-    rho_int_path = "../data/rho_int_20260707_153905.npy"
+    rho_int_path = "../data/rho_int_20260728_130500.npy"
 
-    detuning_num = 300
+    detuning_num = 3000
 
     load_rho_int_and_plot(
         rho_int_path=rho_int_path,
