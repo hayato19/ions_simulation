@@ -11,11 +11,11 @@ def plot_t(t, T, T_min, M, n_sum, mag, save_dir="./figs"):
 
     os.makedirs(save_dir, exist_ok=True)
 
-    t = t[:n_sum]
+    # t = t[:n_sum]
 
-    n = len(T) // mag
-    T = T[:n]
-    t = t[:n]
+    # n = len(T) // mag
+    T= T[:n_sum]
+    t = t[:n_sum]
 
     plt.figure(figsize=(10, 6))
     for j in range(M):

@@ -6,7 +6,7 @@ from simulation.bloph import phase_shift_x, phase_shift_v, bloph_timeeq_x, bloph
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
-from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # 各ワーカープロセスで共有する読み取り専用データ
@@ -131,12 +131,12 @@ def calculate_spec_bloch(M, x, v, n_workers=None):
     omega_0 = 2 * math.pi * c / ramda
 
     scale = 0.5e7 * 2 * math.pi
-    delta = np.linspace(-scale, scale, 1000)
+    delta = np.linspace(-scale, scale, 3000)
 
     mode = "each"
     dt_rec = dt * w
 
-    start_step = N // 15
+    start_step = N // 15 * 7
     end_step = N
     n_steps_save = end_step - start_step
 
@@ -169,12 +169,10 @@ def calculate_spec_bloch(M, x, v, n_workers=None):
     print_log(f"logical processors = {logical_cores}")
     print_log(f"parallel workers = {n_workers}")
 
-    # 全タスクを一括submitせず、最大n_workers個だけ実行待ちに置く。
-    # これにより、Futureが保持するrho_ee_rowの数を制限する。
-    task_iter = iter(
+    tasks = [
         (i, float(delta_i))
         for i, delta_i in enumerate(delta)
-    )
+    ]
 
     completed_count = 0
 
@@ -190,88 +188,80 @@ def calculate_spec_bloch(M, x, v, n_workers=None):
                     dt_rec,
             ),
     ) as executor:
-        # key: Future, value: そのFutureに対応するdelta index
-        # この辞書の要素数は最大n_workers個に制限する。
-        pending_futures = {}
-
-        # 最初のn_workers個だけ投入する。
-        for _ in range(n_workers):
-            try:
-                task = next(task_iter)
-            except StopIteration:
-                break
-
-            future = executor.submit(_calculate_one_delta, task)
-            pending_futures[future] = task[0]
-
-        while pending_futures:
-            # 少なくとも1タスク完了するまで待つ。
-            done, _ = wait(
-                pending_futures,
-                return_when=FIRST_COMPLETED,
+        futures = [
+            executor.submit(
+                _calculate_one_delta,
+                task,
             )
+            for task in tasks
+        ]
 
-            # 完了したFutureをpending_futuresから外し、
-            # 結果を書き込んだ後に参照を破棄する。
-            while done:
-                future = done.pop()
-                expected_i = pending_futures.pop(future)
+        for future in as_completed(futures):
+            (
+                i,
+                rho_int_row,
+                rho_ee_row,
+                errors,
+            ) = future.result()
 
-                try:
-                    i, rho_int_row, rho_ee_row, errors = future.result()
-                except Exception as e:
-                    raise RuntimeError(
-                        f"delta task failed: i={expected_i}"
-                    ) from e
+            # memmapへの書き込みは親プロセスだけが行う。
+            rho_int[i, :] = rho_int_row
+            rho_ee_all[i, :, :] = rho_ee_row
 
-                if i != expected_i:
-                    raise RuntimeError(
-                        "delta index mismatch: "
-                        f"expected {expected_i}, got {i}"
+            completed_count += 1
+
+            if errors:
+                for error in errors:
+                    print_log(
+                        "Numerical error detected"
+                    )
+                    print(
+                        "reason =",
+                        error["reason"],
+                    )
+                    print(
+                        "i =",
+                        error["i"],
+                    )
+                    print(
+                        "j =",
+                        error["j"],
+                    )
+                    print(
+                        "step =",
+                        error["step"],
+                    )
+                    print(
+                        "delta =",
+                        error["delta"],
+                    )
+                    print(
+                        "x =",
+                        error["x"],
+                    )
+                    print(
+                        "v =",
+                        error["v"],
+                    )
+                    print(
+                        "rho_ge =",
+                        error["rho_ge"],
+                    )
+                    print(
+                        "rho_ee =",
+                        error["rho_ee"],
                     )
 
-                # memmapへの書き込みは親プロセスだけが行う。
-                rho_int[i, :] = rho_int_row
-                rho_ee_all[i, :, :] = rho_ee_row
+            if (
+                    completed_count % 10 == 0
+                    or completed_count == len(delta)
+            ):
+                print_log(
+                    f"calc {completed_count}/{len(delta)}"
+                )
 
-                completed_count += 1
-
-                if errors:
-                    for error in errors:
-                        print_log("Numerical error detected")
-                        print("reason =", error["reason"])
-                        print("i =", error["i"])
-                        print("j =", error["j"])
-                        print("step =", error["step"])
-                        print("delta =", error["delta"])
-                        print("x =", error["x"])
-                        print("v =", error["v"])
-                        print("rho_ge =", error["rho_ge"])
-                        print("rho_ee =", error["rho_ee"])
-
-                if completed_count % 10 == 0 or completed_count == len(delta):
-                    print_log(f"calc {completed_count}/{len(delta)}")
-
-                if completed_count % 20 == 0:
-                    rho_ee_all.flush()
-
-                # rho_ee_rowは大きな配列なので、memmapへの書き込み後に
-                # 親プロセス側の参照を明示的に破棄する。
-                del rho_int_row
-                del rho_ee_row
-                del errors
-                del future
-
-            # 完了分を解放した後で、空いた枠だけ次のタスクを投入する。
-            # pending_futuresの要素数は常にn_workers以下になる。
-            while len(pending_futures) < n_workers:
-                try:
-                    task = next(task_iter)
-                except StopIteration:
-                    break
-
-                future = executor.submit(_calculate_one_delta, task)
-                pending_futures[future] = task[0]
+            if completed_count % 20 == 0:
+                rho_ee_all.flush()
 
     rho_ee_all.flush()
 
