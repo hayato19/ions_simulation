@@ -19,23 +19,26 @@ def T_ratio_with_and_without_COM(
 
     M = 5
 
-    trap_f = 1e6
-    w = 50 // 3
-    n_cycle = 1000 // w  #約1サイクル(互換性なし)
-    n_sum = N // n_cycle  #総ステップ≒n_cycle * n_sum
-
+    trap_f = 0.5e6
+    w = 200 #サイクル幅(無次元)
+    n_cycle = N // w  # サイクル個数(=記録数/サイクル幅)
+    
     v2 = np.zeros_like(v)
-    v2 = v2[:n_sum]
+    # v2 = v2[:n_sum]
     T = np.zeros_like(v)
-    T = T[:n_sum]
+    # T = T[:n_sum]
 
 
-    for i in range(n_sum-1):
-        for l in range(n_cycle-1):
-            step = n_cycle * i + l
-            v2[i][:] += v[step][:] ** 2
-            v2[i][:] = v2[i][:]
-        T[:][:] = m / kB * v2[:][:] / n_cycle
+    for cycle_num in range(n_cycle):    # 計算サイクル番号(同一サイクルでTは一定とする)
+        cycle_start = w * cycle_num     # cycle_num番目のサイクルの開始番号
+        for l in range(w):     # サイクル内の数え上げ
+            v2[cycle_start][:] += v[cycle_start + l][:] ** 2 # サイクル初めのv2にサイクル内全データのv^2を加算
+                    
+        T_cycle = m / kB * v2[cycle_start][:] / w # サイクルの平均運動温度
+                
+        for l in range(w):     # サイクル内の数え上げ
+            T[cycle_start + l] = T_cycle
+        
 
     # T = np.zeros_like(v)
     # T[:][:] = m / kB * v[:][:] ** 2
@@ -43,4 +46,4 @@ def T_ratio_with_and_without_COM(
     T_min = (hbar * Gamma * np.sqrt(1.0 + s0) / (4.0 * kB)) * (1.0 + j)
     print(n_cycle)
 
-    return T, T_min, n_sum
+    return T, T_min, w*(n_cycle-1)
