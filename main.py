@@ -202,7 +202,7 @@ def main():
     # 分光信号のシミュレーション
     # ======================================
 
-    rho_ee_source, rho_int_source, delta_source, scale_rad_s, cal_start_ratio, detuning_num, ramda_m = calculate_spec_bloch(
+    rho_ee_source, rho_int_source, delta_source, scale_rad_s, cal_start_ratio, detuning_num, lambda_m = calculate_spec_bloch(
         M,
         xM,
         vM,
