@@ -131,12 +131,14 @@ def calculate_spec_bloch(M, x, v, n_workers=None):
     omega_0 = 2 * math.pi * c / ramda
 
     scale = 0.5e7 * 2 * math.pi
-    delta = np.linspace(-scale, scale, 3000)
+    detuning_num = 3000
+    delta = np.linspace(-scale, scale, detuning_num)
+    cal_start_ratio = 7 / 15
 
     mode = "each"
     dt_rec = dt * w
 
-    start_step = N // 15 * 7
+    start_step = int(N * cal_start_ratio)
     end_step = N
     n_steps_save = end_step - start_step
 
@@ -273,4 +275,4 @@ def calculate_spec_bloch(M, x, v, n_workers=None):
     print("saved rho_int:", rho_int_path)
     print("saved delta:", delta_path)
 
-    return rho_ee_path, rho_int_path, delta_path
+    return rho_ee_path, rho_int_path, delta_path, scale, cal_start_ratio, detuning_num, ramda

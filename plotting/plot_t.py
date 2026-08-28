@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 plt.rcParams["font.size"] = 15
 
-def plot_t(t, T, T_min, M, n_sum, mag, save_dir="./figs"):
+def plot_t(t, T, T_min, M, n_sum, save_dir="./figs"):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_name = f"energy_vs_time_{timestamp}.png"
     save_path = os.path.join(save_dir, save_name)
@@ -13,7 +13,6 @@ def plot_t(t, T, T_min, M, n_sum, mag, save_dir="./figs"):
 
     # t = t[:n_sum]
 
-    # n = len(T) // mag
     T= T[:n_sum]
     t = t[:n_sum]
 
