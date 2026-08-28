@@ -10,7 +10,7 @@ from simulation.params import dt, N, w, alpha, eps, ips, ht, hbar, set_particle_
 from simulation.initialize import initialize_arrays_multi
 from plotting.plot_x_range import plot_x_range
 from plotting.plot_full import plot_full_x, plot_full_f, plot_full_rho
-from plotting.plot_fft import plot_fft_all_particles
+from plotting.plot_fft_modified import plot_fft_all_particles
 from plotting.plot_energy import plot_energy
 from simulation.spectroscopy import calculate_rho_sp
 from plotting.plot_spectroscopy import plot_spectroscopy
@@ -128,7 +128,7 @@ def main():
     # 初期条件設定
     # ======================================
 
-    M = 2
+    M = 3
     x0s = np.linspace(-12e-6, 12e-6, M)
     v0s = 0.0
 
